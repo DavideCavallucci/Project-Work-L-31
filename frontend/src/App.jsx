@@ -2,7 +2,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center">
       <h1 className="text-5xl font-extrabold text-blue-600 mb-4">
-        NovaHealth 💊
+        MedCloud 💊
       </h1>
       <p className="text-xl text-gray-700">
         Il sistema di gestione sanitaria API-based
