@@ -17,3 +17,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Questa è la Classe Base da cui erediteranno tutte le nostre tabelle
 Base = declarative_base()
+
+# Prende l'URL da Render, se non c'è usa quello locale
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
+
+# Correzione necessaria per Render/Heroku se l'URL inizia con postgres:// invece di postgresql://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+engine = create_engine(DATABASE_URL)
