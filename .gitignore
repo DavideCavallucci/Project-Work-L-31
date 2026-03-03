@@ -1,0 +1,12 @@
+# Ignora le cartelle pesanti (Node e Python)
+node_modules/
+__pycache__/
+venv/
+env/
+
+# Ignora i file segreti e le variabili d'ambiente
+.env
+.env.local
+
+# Ignora i Database locali
+*.sqlite3
