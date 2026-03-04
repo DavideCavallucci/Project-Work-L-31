@@ -46,7 +46,7 @@ def login_utente(credenziali: schemas.LoginRequest, db: Session = Depends(get_db
     utente = db.query(models.Utente).filter(models.Utente.email == credenziali.email).first()
     
     # 2. Controlliamo se esiste e se la password combacia
-    if not utente or utente.password_hash != credenziali.password:
+    if not utente or utente.password != credenziali.password:
         raise HTTPException(status_code=401, detail="Email o password errati")
 
     id_collegato = None
@@ -130,7 +130,7 @@ def registra_paziente(paziente_in: schemas.PazienteCreate, db: Session = Depends
     # 2. Creiamo l'Utente (Credenziali)
     nuovo_utente = models.Utente(
         email=paziente_in.email,
-        password_hash=paziente_in.password, # Nel mondo reale qui si usa un hash!
+        password=paziente_in.password, # Nel mondo reale qui si usa un hash!
         ruolo="PAZIENTE"
     )
     db.add(nuovo_utente)
@@ -210,7 +210,7 @@ def registra_medico(medico_in: schemas.MedicoCreate, db: Session = Depends(get_d
     # Creiamo le credenziali
     nuovo_utente = models.Utente(
         email=medico_in.email,
-        password_hash=medico_in.password, 
+        password=medico_in.password, 
         ruolo="MEDICO"
     )
     db.add(nuovo_utente)
