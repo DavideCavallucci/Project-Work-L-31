@@ -5,6 +5,9 @@ import DashboardAdmin from './Components/DashboardAdmin'
 import Footer from './Components/Footer' // Assicurati di aver creato questo file!
 
 function App() {
+  // 🌟 ECCO LA MAGIA: Questa riga decide quale URL usare
+  const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
   const [statoBackend, setStatoBackend] = useState("In connessione...")
   const [vistaAttiva, setVistaAttiva] = useState('paziente')
   const [utentiLoggati, setUtentiLoggati] = useState({ paziente: null, medico: null, admin: null })
@@ -12,7 +15,8 @@ function App() {
   const [password, setPassword] = useState('')
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/")
+    // 🌟 SOSTITUITO L'URL FISSO CON LA VARIABILE
+    fetch(`${apiUrl}/`)
       .then(res => res.json())
       .then(data => setStatoBackend(data.messaggio))
       .catch(() => setStatoBackend("Offline 🚨"))
@@ -20,7 +24,8 @@ function App() {
 
   const eseguiLogin = (e) => {
     e.preventDefault();
-    fetch('http://127.0.0.1:8000/api/login', {
+    // 🌟 SOSTITUITO L'URL FISSO CON LA VARIABILE
+    fetch(`${apiUrl}/api/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })

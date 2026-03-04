@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react';
 
 export default function DashboardAdmin() {
+  // 🌟 AGGIUNTA LA VARIABILE D'AMBIENTE QUI
+  const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
   const [fatture, setFatture] = useState([]);
 
   const caricaDati = () => {
-    fetch('http://127.0.0.1:8000/api/fatture/dettagliate').then(res => res.json()).then(setFatture);
+    // 🌟 URL DINAMICO: Ora usa apiUrl invece di 127.0.0.1
+    fetch(`${apiUrl}/api/fatture/dettagliate`)
+      .then(res => res.json())
+      .then(setFatture)
+      .catch(err => console.error("Errore nel caricamento fatture:", err)); // Aggiunto un catch per sicurezza!
   };
 
   useEffect(() => { caricaDati(); }, []);

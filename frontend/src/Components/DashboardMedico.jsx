@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 
 export default function DashboardMedico({ utente }) {
+  // 🌟 VARIABILE D'AMBIENTE AGGIUNTA
+  const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
   const [vista, setVista] = useState('attesa'); // 'attesa' o 'storico'
   const [prenotazioni, setPrenotazioni] = useState([]);
   const [storico, setStorico] = useState([]);
@@ -9,19 +12,25 @@ export default function DashboardMedico({ utente }) {
   const [idSelezionato, setIdSelezionato] = useState(null);
 
   const caricaDati = () => {
-    fetch('http://127.0.0.1:8000/api/prenotazioni')
+    // 🌟 FETCH 1 CORRETTA
+    fetch(`${apiUrl}/api/prenotazioni`)
       .then(r => r.json())
-      .then(data => setPrenotazioni(data.filter(p => p.stato === 'PROGRAMMATA' && p.id_medico === utente.id_collegato)));
+      .then(data => setPrenotazioni(data.filter(p => p.stato === 'PROGRAMMATA' && p.id_medico === utente.id_collegato)))
+      .catch(err => console.error("Errore prenotazioni:", err));
 
-    fetch(`http://127.0.0.1:8000/api/medici/${utente.id_collegato}/storico`)
-      .then(r => r.json()).then(setStorico);
+    // 🌟 FETCH 2 CORRETTA
+    fetch(`${apiUrl}/api/medici/${utente.id_collegato}/storico`)
+      .then(r => r.json())
+      .then(setStorico)
+      .catch(err => console.error("Errore storico:", err));
   };
 
   useEffect(() => { caricaDati(); }, [utente]);
 
   const inviaReferto = (e) => {
     e.preventDefault();
-    fetch('http://127.0.0.1:8000/api/referti', {
+    // 🌟 FETCH 3 CORRETTA
+    fetch(`${apiUrl}/api/referti`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
@@ -34,8 +43,10 @@ export default function DashboardMedico({ utente }) {
         alert('✅ Referto inviato correttamente!');
         setEsito(''); setPrescrizioni(''); setIdSelezionato(null);
         caricaDati();
+      } else {
+        alert('❌ Errore durante l\'invio del referto.');
       }
-    });
+    }).catch(err => alert("Errore di rete: " + err.message));
   };
 
   return (
