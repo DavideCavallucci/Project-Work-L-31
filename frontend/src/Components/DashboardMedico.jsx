@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 export default function DashboardMedico({ utente }) {
   // 🌟 VARIABILE D'AMBIENTE AGGIUNTA
-  const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+  const apiUrl = "https://project-work-l-31.onrender.com";
 
   const [vista, setVista] = useState('attesa'); // 'attesa' o 'storico'
   const [prenotazioni, setPrenotazioni] = useState([]);

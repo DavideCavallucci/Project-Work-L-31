@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 export default function DashboardAdmin() {
   // 🌟 AGGIUNTA LA VARIABILE D'AMBIENTE QUI
-  const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+  const apiUrl = "https://project-work-l-31.onrender.com";
 
   const [fatture, setFatture] = useState([]);
 

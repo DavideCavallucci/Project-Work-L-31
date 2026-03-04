@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 
 export default function AreaPaziente({ utente }) {
+  // 🌟 INSERISCI IL TUO LINK DI RENDER QUI (Senza la / finale)
+  const apiUrl = "https://project-work-l-31.onrender.com";
+
   // Stati per la navigazione e i dati
   const [vista, setVista] = useState('prenota'); // 'prenota', 'cartella', 'pagamenti'
   const [medici, setMedici] = useState([]);
@@ -14,32 +17,41 @@ export default function AreaPaziente({ utente }) {
   // 1. Funzioni di Caricamento Dati
   const caricaTutto = () => {
     // Carica lo storico clinico
-    fetch(`http://127.0.0.1:8000/api/pazienti/${utente.id_collegato}/cartella`)
+    fetch(`${apiUrl}/api/pazienti/${utente.id_collegato}/cartella`)
       .then(r => r.json())
-      .then(setCartella);
+      .then(setCartella)
+      .catch(err => console.error("Errore cartella:", err));
     
     // Carica le fatture personali
-    fetch(`http://127.0.0.1:8000/api/pazienti/${utente.id_collegato}/fatture`)
+    fetch(`${apiUrl}/api/pazienti/${utente.id_collegato}/fatture`)
       .then(r => r.json())
-      .then(setFatture);
+      .then(setFatture)
+      .catch(err => console.error("Errore fatture:", err));
   };
 
   useEffect(() => {
     // Carica medici e prestazioni disponibili per tutti
-    fetch('http://127.0.0.1:8000/api/medici').then(r => r.json()).then(setMedici);
-    fetch('http://127.0.0.1:8000/api/prestazioni').then(r => r.json()).then(setPrestazioni);
+    fetch(`${apiUrl}/api/medici`)
+      .then(r => r.json())
+      .then(setMedici)
+      .catch(err => console.error("Errore medici:", err));
+      
+    fetch(`${apiUrl}/api/prestazioni`)
+      .then(r => r.json())
+      .then(setPrestazioni)
+      .catch(err => console.error("Errore prestazioni:", err));
+      
     caricaTutto();
   }, [utente]);
 
   // 2. Azioni (Logica di Business)
-
   const confermaPrenotazione = () => {
     if(!selezione.medico || !selezione.prestazione || !selezione.data) {
         alert("Per favore, seleziona tutti i campi prima di confermare!");
         return;
     }
 
-    fetch('http://127.0.0.1:8000/api/prenotazioni', {
+    fetch(`${apiUrl}/api/prenotazioni`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -57,21 +69,21 @@ export default function AreaPaziente({ utente }) {
       } else { 
         alert("🚨 Spiacenti, il medico è già occupato in questo orario."); 
       }
-    });
+    }).catch(err => alert("Errore di rete: " + err.message));
   };
 
   const attivaPromemoriaBackend = (idPrenotazione) => {
-    fetch('http://127.0.0.1:8000/api/promemoria', {
+    fetch(`${apiUrl}/api/promemoria`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id_prenotazione: idPrenotazione })
     }).then(res => {
       if(res.ok) alert("🔔 Promemoria attivato! Riceverai una notifica prima della visita.");
-    });
+    }).catch(err => console.error("Errore promemoria:", err));
   };
 
   const pagaFattura = (id) => {
-    fetch(`http://127.0.0.1:8000/api/fatture/${id}/paga`, { 
+    fetch(`${apiUrl}/api/fatture/${id}/paga`, { 
       method: 'PATCH' 
     })
     .then(res => {
@@ -81,7 +93,7 @@ export default function AreaPaziente({ utente }) {
       } else {
         alert("🚨 Errore durante il processo di pagamento.");
       }
-    });
+    }).catch(err => alert("Errore di rete: " + err.message));
   };
 
   // 3. Interfaccia Utente (Rendering)
