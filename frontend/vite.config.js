@@ -7,4 +7,5 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  base: './', // 🌟 LA CHIAVE DI TUTTO: Forza i percorsi relativi!
 })
