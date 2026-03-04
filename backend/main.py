@@ -3,26 +3,32 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 import models, schemas
 from database import engine, SessionLocal, Base
+from fastapi.middleware.cors import CORSMiddleware # Spostato qui per ordine
 
 # Crea le tabelle se non esistono
 Base.metadata.create_all(bind=engine)
 
+# 🌟 UNICA INIZIALIZZAZIONE
 app = FastAPI(title="MedCloud")
 
-from fastapi.middleware.cors import CORSMiddleware
-
-app = FastAPI(title="MedCloud API")
-
-# --- INIZIO BLOCCO CORS ---
-# Diciamo al backend di accettare le chiamate che arrivano dal nostro frontend React
+# --- CONFIGURAZIONE CORS UNIVERSALE ---
+# Usiamo ["*"] per permettere a QUALSIASI frontend di chiamare il backend.
+# È la soluzione più sicura per i Project Work per evitare blocchi improvvisi.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], # L'indirizzo di Vite/React
+    allow_origins=["*"], 
     allow_credentials=True,
-    allow_methods=["*"], # Permette tutti i metodi (GET, POST, PUT, DELETE)
-    allow_headers=["*"], # Permette tutti gli header
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-# --- FINE BLOCCO CORS ---
+
+# Funzione per aprire e chiudere la connessione al DB
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # Funzione per aprire e chiudere la connessione al DB ad ogni richiesta
 def get_db():
