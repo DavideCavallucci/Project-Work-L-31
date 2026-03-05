@@ -127,7 +127,7 @@ function App() {
             
             <form onSubmit={eseguiLogin} className="space-y-6">
               <div className="group space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 transition-colors group-focus-within:text-slate-900">Email Aziendale</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 transition-colors group-focus-within:text-slate-900">Email</label>
                 <input 
                   type="email" placeholder="nome@esempio.it" required 
                   className={`w-full bg-white border border-slate-100 p-5 rounded-[1.8rem] focus:ring-4 focus:ring-${tema.colore}-500/10 focus:border-${tema.colore}-500 outline-none font-medium transition-all shadow-sm`}
@@ -200,7 +200,7 @@ function App() {
         
         {/* SIDEBAR BENTO STYLE */}
         <aside className="w-full lg:w-80 space-y-4 shrink-0">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 ml-4">Terminal Access</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 ml-4">Terminale d'Accesso</p>
           
           {['paziente', 'medico', 'admin'].map(ruolo => {
             const act = vistaAttiva === ruolo;

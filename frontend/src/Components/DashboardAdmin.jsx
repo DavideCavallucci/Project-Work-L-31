@@ -1,27 +1,53 @@
 import { useState, useEffect } from 'react';
 
-export default function DashboardAdmin() {
-  const apiUrl = "https://project-work-l-31.onrender.com";
+// --- MOTORE DI LOGICA DINAMICA ADMIN ---
+const getIconaPrestazione = (nome) => {
+    const n = nome?.toLowerCase() || "";
+    if (n.includes('cardio')) return '🫀';
+    if (n.includes('derma')) return '🔍';
+    if (n.includes('ortoped') || n.includes('oss')) return '🦴';
+    if (n.includes('oculist') || n.includes('visiv')) return '👁️';
+    if (n.includes('dent') || n.includes('odont')) return '🦷';
+    if (n.includes('neuro')) return '🧠';
+    if (n.includes('ginecolog')) return '🤰';
+    if (n.includes('pediatr')) return '🧸';
+    if (n.includes('diet') || n.includes('nutriz')) return '🍎';
+    if (n.includes('psico')) return '🛋️';
+    return '🩺';
+};
 
-  const [fatture, setFatture] = useState([]);
+export default function DashboardAdmin() {
+  const apiUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:8000" 
+    : "https://project-work-l-31.onrender.com";
+
+  const [vista, setVista] = useState('finanza'); // finanza, prestazioni
+  const [dati, setDati] = useState({ fatture: [], prestazioni: [] });
   const [loading, setLoading] = useState(true);
   
   const [ricerca, setRicerca] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [sollecitoInviato, setSollecitoInviato] = useState(false);
 
-  // 1. Funzione di caricamento dati
-  const caricaDati = async () => {
+  // Form per nuova prestazione
+  const [nuovaPresta, setNuovaPresta] = useState({ nome_prestazione: "", costo: "" });
+
+  const caricaTutto = async () => {
     try {
-      const res = await fetch(`${apiUrl}/api/fatture/dettagliate`);
-      const data = await res.json();
+      setLoading(true);
+      const [resFat, resPre] = await Promise.all([
+        fetch(`${apiUrl}/api/fatture/dettagliate`),
+        fetch(`${apiUrl}/api/prestazioni?admin=true`)
+      ]);
       
-      if (Array.isArray(data)) {
-        // Ordiniamo dalla più recente alla più vecchia
-        const ordinate = data.sort((a, b) => new Date(b.data_emissione) - new Date(a.data_emissione));
-        setFatture(ordinate);
-      } else {
-        setFatture([]);
-      }
+      const fatData = await resFat.json();
+      
+      const fatOrdinate = Array.isArray(fatData) ? fatData.sort((a, b) => new Date(b.data_emissione) - new Date(a.data_emissione)) : [];
+
+      setDati({
+        fatture: fatOrdinate,
+        prestazioni: await resPre.json()
+      });
     } catch (err) {
       console.error("Errore di connessione al server:", err);
     } finally {
@@ -29,9 +55,8 @@ export default function DashboardAdmin() {
     }
   };
 
-  useEffect(() => { caricaDati(); }, []);
+  useEffect(() => { caricaTutto(); }, []);
 
-  // 2. Simulazione Azione di Sollecito
   const gestisciSollecito = () => {
     if (!window.confirm("Vuoi inviare una notifica di sollecito ai pazienti con fatture in sospeso?")) return;
     
@@ -42,45 +67,61 @@ export default function DashboardAdmin() {
     }, 2000);
   };
 
-  // 3. Logica Dati e KPI
-  const safeFatture = Array.isArray(fatture) ? fatture : [];
-  
-  // 🌟 MOTORE DI RICERCA: Solo per Nominativo Paziente
-  const fattureFiltrate = safeFatture.filter(f => {
-      const termine = ricerca.toLowerCase().trim();
-      const nomePaziente = String(f.paziente || "Ignoto").toLowerCase();
-      return nomePaziente.includes(termine);
-  });
+  const aggiungiPrestazione = async (e) => {
+    e.preventDefault();
+    if (!window.confirm("Confermi l'aggiunta di questa nuova prestazione al listino ufficiale?")) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`${apiUrl}/api/prestazioni`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuovaPresta)
+      });
+      if (res.ok) {
+        alert("✨ Prestazione registrata con successo!");
+        setNuovaPresta({ nome_prestazione: "", costo: "" });
+        await caricaTutto();
+      }
+    // eslint-disable-next-line no-unused-vars
+    } catch (err) { alert("Errore connessione."); } finally { setIsSubmitting(false); }
+  };
 
+  // 🌟 Rimosso 'statoAttuale' che non ci serve più
+  const togglePrestazione = async (id) => {
+    try {
+      const res = await fetch(`${apiUrl}/api/prestazioni/${id}/toggle`, { method: 'PATCH' });
+      if (res.ok) { await caricaTutto(); }
+    // eslint-disable-next-line no-unused-vars
+    } catch (err) { alert("Errore aggiornamento."); }
+  };
+
+  // --- MOTORE KPI E FILTRI ---
+  const safeFatture = dati.fatture;
+  
   const totaleEmesso = safeFatture.reduce((s, f) => s + (Number(f.importo) || 0), 0);
   const totaleIncassato = safeFatture.filter(f => f.pagata).reduce((s, f) => s + (Number(f.importo) || 0), 0);
-  const inPendenza = totaleEmesso - totaleIncassato;
-  const percentualeIncasso = totaleEmesso > 0 ? Math.round((totaleIncassato / totaleEmesso) * 100) : 0;
+  const pendenza = totaleEmesso - totaleIncassato;
+  const ratio = totaleEmesso > 0 ? Math.round((totaleIncassato / totaleEmesso) * 100) : 0;
 
-  // UI Caricamento
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[70vh] space-y-8 animate-in fade-in duration-1000">
+  const fattureFiltrate = safeFatture.filter(f => f.paziente?.toLowerCase().includes(ricerca.toLowerCase()));
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center h-[70vh] space-y-8 animate-in fade-in duration-1000">
         <div className="relative w-24 h-24">
-          <div className="absolute inset-0 border-4 border-indigo-100/20 rounded-full blur-sm"></div>
           <div className="absolute inset-0 border-4 border-indigo-100 rounded-full opacity-20"></div>
           <div className="absolute inset-0 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center text-2xl">🏦</div>
         </div>
-        <div className="text-center">
-            <p className="text-indigo-600 font-black animate-pulse uppercase tracking-[0.4em] text-sm">Decrittazione Flussi...</p>
-        </div>
-      </div>
-    );
-  }
+        <p className="text-indigo-600 font-black animate-pulse uppercase tracking-[0.4em] text-sm">Decrittazione Flussi...</p>
+    </div>
+  );
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-12">
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20">
       
       {/* HEADER FINTECH ESSENZIALE */}
-      <header className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-[3rem] p-10 lg:p-12 text-white shadow-2xl shadow-indigo-900/30 relative overflow-hidden border border-white/10">
+      <header className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-[3rem] p-10 lg:p-12 text-white shadow-2xl relative overflow-hidden border border-white/10">
         <div className="absolute -top-[50%] -right-[10%] w-[70%] h-[150%] bg-indigo-500/20 blur-[120px] rounded-full pointer-events-none"></div>
-
         <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
             <div className="space-y-4">
                 <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-5 py-2 rounded-full border border-white/10 shadow-inner">
@@ -88,194 +129,206 @@ export default function DashboardAdmin() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
-                    <span className="text-[10px] font-black tracking-[0.2em] uppercase text-indigo-100">Live Ledger • System Online</span>
+                    <span className="text-[10px] font-black tracking-[0.2em] uppercase text-indigo-100">Live • Command Center</span>
                 </div>
                 <div>
-                    <h2 className="text-5xl lg:text-6xl font-black tracking-tighter bg-gradient-to-r from-white via-indigo-100 to-slate-400 bg-clip-text text-transparent">
-                        Finance OS
-                    </h2>
-                    <p className="text-indigo-200/80 font-medium mt-2 text-sm uppercase tracking-widest max-w-md">
-                        Gestione amministrativa e monitoraggio liquidità.
-                    </p>
+                    <h2 className="text-5xl lg:text-6xl font-black tracking-tighter">MedCloud Dashboard</h2>
+                    <p className="text-indigo-200 font-medium mt-1 uppercase tracking-widest text-sm max-w-md">Amministrazione, Finanza e Controllo.</p>
                 </div>
             </div>
-            
-            <div className="flex flex-col items-end w-full lg:w-auto mt-6 lg:mt-0">
-                <div className="bg-white/5 backdrop-blur-xl px-8 py-5 rounded-[2rem] border border-white/10 shadow-2xl flex flex-col items-end">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-300/70 mb-1">Esercizio Fiscale</p>
-                    <p className="text-3xl font-black tracking-widest text-indigo-100">{new Date().getFullYear()}</p>
-                </div>
+            <div className="bg-white/5 px-8 py-5 rounded-[2rem] border border-white/10 text-right">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-300 mb-1">Esercizio Fiscale</p>
+                <p className="text-3xl font-black tracking-widest text-indigo-100">{new Date().getFullYear()}</p>
             </div>
         </div>
       </header>
-      
-      {/* BENTO GRID KPI CARDS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* BIG CARD: Liquidità */}
-        <div className="lg:col-span-5 bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-[3rem] shadow-2xl shadow-blue-900/20 text-white relative overflow-hidden group border border-white/10">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 transition-transform group-hover:scale-150 duration-700"></div>
-          <div className="relative z-10 h-full flex flex-col justify-between">
-            <div>
-                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl mb-6 backdrop-blur-md shadow-inner border border-white/20">💶</div>
-                <p className="text-indigo-100 text-[10px] font-black uppercase tracking-[0.3em]">Liquidità Netta Incassata</p>
-                <div className="flex items-end gap-3 mt-1">
-                    <h4 className="text-5xl font-black tracking-tighter">€{totaleIncassato}</h4>
-                </div>
-            </div>
 
-            <div className="mt-8">
-                <div className="flex justify-between items-end mb-2">
-                    <span className="text-xs font-bold text-indigo-200">Tasso di conversione</span>
-                    <span className="text-lg font-black text-white">{percentualeIncasso}%</span>
+      {/* TABS DI NAVIGAZIONE */}
+      <div className="bg-white p-3 rounded-full border border-slate-100 shadow-xl flex justify-center items-center gap-2 max-w-md mx-auto relative z-10">
+        <button onClick={() => setVista('finanza')} className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all ${vista === 'finanza' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}>Finanza</button>
+        <button onClick={() => setVista('prestazioni')} className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all ${vista === 'prestazioni' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}>Listino Servizi</button>
+      </div>
+
+      <main>
+        {/* --- SEZIONE FINANZA --- */}
+        {vista === 'finanza' && (
+          <div className="space-y-10">
+            {/* KPI CARDS */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-5 bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-[3rem] shadow-2xl text-white overflow-hidden border border-white/10 relative group">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150"></div>
+                  <p className="relative z-10 text-[10px] font-black uppercase tracking-[0.3em] text-indigo-100">Liquidità Netta Incassata</p>
+                  <h4 className="relative z-10 text-5xl font-black mt-1 tracking-tighter">€{totaleIncassato}</h4>
+                  <div className="mt-8 relative z-10">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="text-xs font-bold text-indigo-200">Tasso di conversione</span>
+                      <span className="text-lg font-black">{ratio}%</span>
+                    </div>
+                    <div className="bg-black/20 rounded-full h-3 w-full p-0.5 shadow-inner">
+                      <div className="bg-gradient-to-r from-emerald-400 to-cyan-400 h-full rounded-full transition-all duration-1000" style={{ width: `${ratio}%` }}></div>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-black/20 rounded-full h-3 w-full overflow-hidden p-0.5 shadow-inner">
-                    <div className="bg-gradient-to-r from-emerald-400 to-cyan-400 h-full rounded-full transition-all duration-1500 ease-out relative overflow-hidden" style={{ width: `${percentualeIncasso}%` }}>
-                        <div className="absolute top-0 left-0 bottom-0 w-full bg-white/30 animate-[shimmer_2s_infinite]"></div>
+
+                <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl flex flex-col justify-between">
+                        <div>
+                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Fatturato Lordo Emesso</p>
+                            <h4 className="text-4xl font-black text-slate-800 mt-1 tracking-tighter">€{totaleEmesso}</h4>
+                        </div>
+                        <span className="mt-6 text-xs text-slate-400 font-bold">Lordo, prima delle tasse</span>
+                    </div>
+                    <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl flex flex-col justify-between">
+                        <div>
+                            <p className="text-orange-500 text-[10px] font-black uppercase tracking-[0.2em]">Crediti In Sospeso</p>
+                            <h4 className="text-4xl font-black text-orange-500 mt-1 tracking-tighter">€{pendenza}</h4>
+                        </div>
+                        <button onClick={gestisciSollecito} disabled={pendenza === 0 || sollecitoInviato} className="mt-6 w-full bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 py-3 rounded-xl text-[10px] font-black uppercase active:scale-95 disabled:opacity-50 transition-all">
+                            {sollecitoInviato ? '...' : pendenza === 0 ? 'Registro Pulito ✓' : 'Sollecita Pagamenti'}
+                        </button>
                     </div>
                 </div>
             </div>
-          </div>
-        </div>
 
-        <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* CARD: Volume Affari */}
-            <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 relative overflow-hidden flex flex-col justify-between">
-                <div>
-                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-xl mb-4">📈</div>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Fatturato Emesso</p>
-                    <h4 className="text-4xl font-black text-slate-800 mt-1 tracking-tighter">€{totaleEmesso}</h4>
-                </div>
-                <div className="mt-6 flex items-center gap-2">
-                    <span className="bg-indigo-50 text-indigo-600 text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest border border-indigo-100">Lordo</span>
-                    <span className="text-xs text-slate-400 font-bold">Prima delle tasse</span>
-                </div>
-            </div>
-
-            {/* CARD: In Pendenza (CON BOTTONE FUNZIONANTE) */}
-            <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl shadow-slate-200/50 relative overflow-hidden flex flex-col justify-between group">
-                <div className="relative z-10">
-                    <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center text-xl mb-4 font-black">!</div>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Crediti In Sospeso</p>
-                    <h4 className="text-4xl font-black text-orange-500 mt-1 tracking-tighter">€{inPendenza}</h4>
+            {/* TABELLA FATTURE */}
+            <div className="bg-white rounded-[3rem] border border-slate-100 shadow-xl overflow-hidden animate-in fade-in">
+                <div className="p-8 lg:px-10 border-b border-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-slate-50/50">
+                    <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">Registro Transazioni</h3>
+                    
+                    <div className="relative w-full md:w-80 group">
+                        <span className="absolute inset-y-0 left-4 flex items-center text-slate-300 group-focus-within:text-indigo-500 transition-colors">🔍</span>
+                        <input 
+                            type="text" 
+                            placeholder="Cerca paziente..." 
+                            className="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 transition-all shadow-sm placeholder:text-slate-400 placeholder:font-medium"
+                            value={ricerca}
+                            onChange={(e) => setRicerca(e.target.value)} 
+                        />
+                        {ricerca && (
+                            <button onClick={() => setRicerca('')} className="absolute inset-y-0 right-4 flex items-center text-slate-300 hover:text-slate-600 transition-colors">
+                                ✕
+                            </button>
+                        )}
+                    </div>
                 </div>
                 
-                <div className="mt-6 relative z-10">
-                    <button 
-                        onClick={gestisciSollecito}
-                        disabled={sollecitoInviato || inPendenza === 0}
-                        className="w-full bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {sollecitoInviato ? (
-                            <><div className="w-3 h-3 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div> Invio in corso...</>
-                        ) : inPendenza === 0 ? (
-                            <>Nessun Sospeso</>
-                        ) : (
-                            <><div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></div> Sollecita Pagamenti</>
-                        )}
-                    </button>
+                <div className="divide-y divide-slate-50 min-h-[300px]">
+                    {fattureFiltrate.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+                            <span className="text-4xl mb-3">👻</span>
+                            <p className="font-black text-lg">Nessun risultato</p>
+                            <p className="text-xs">Prova a cercare un altro nominativo.</p>
+                        </div>
+                    ) : (
+                        fattureFiltrate.map(f => (
+                            <div key={f.id_fattura} className="p-6 lg:px-10 flex justify-between items-center hover:bg-slate-50/50 transition-colors">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-12 h-12 rounded-[1.2rem] flex items-center justify-center font-black text-lg shadow-inner ${f.pagata ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
+                                        {f.paziente?.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <p className="font-black text-slate-800">{f.paziente}</p>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase">FT-{String(f.id_fattura).padStart(4, '0')} • {new Date(f.data_emissione).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right flex items-center gap-6">
+                                    <p className="font-black text-slate-900 text-lg">€{f.importo}</p>
+                                    <span className={`text-[9px] font-black w-24 text-center py-2 rounded-lg border ${f.pagata ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-orange-50 text-orange-600 border-orange-100'}`}>
+                                        {f.pagata ? 'SALDATA' : 'PENDENTE'}
+                                    </span>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
-        </div>
-      </div>
-
-      {/* REGISTRO TRANSAZIONI MASTER */}
-      <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/40 overflow-hidden">
-        
-        {/* Header Tabella & Ricerca Premium */}
-        <div className="p-8 lg:p-10 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-slate-50/50 backdrop-blur-sm">
-          <div>
-              <h4 className="font-black text-slate-900 text-2xl tracking-tight">Registro Fatture</h4>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Elenco delle transazioni emesse</p>
           </div>
-          
-          <div className="w-full md:w-96 relative group">
-            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                <span className="text-slate-400 group-focus-within:text-indigo-500 transition-colors text-lg">🔍</span>
-            </div>
-            <input 
-                type="text" 
-                placeholder="Cerca per nominativo paziente..." 
-                className="w-full bg-white border border-slate-200 pl-14 pr-12 py-4 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none text-sm font-bold text-slate-700 shadow-sm transition-all placeholder:text-slate-300"
-                value={ricerca}
-                onChange={(e) => setRicerca(e.target.value)}
-            />
-            {ricerca && (
-                <button 
-                    onClick={() => setRicerca('')} 
-                    className="absolute inset-y-0 right-0 pr-5 flex items-center text-slate-300 hover:text-slate-600 transition-colors"
-                    title="Cancella ricerca"
-                >
-                    <span className="text-xl font-black">✕</span>
-                </button>
-            )}
-          </div>
-        </div>
-        
-        {/* Corpo Tabella */}
-        <div className="divide-y divide-slate-100/80 bg-white min-h-[300px]">
-          {safeFatture.length === 0 ? (
-            // STATO 1: Database completamente vuoto
-            <div className="flex flex-col items-center justify-center p-20 text-center h-full">
-                <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center text-4xl mb-4 shadow-inner border border-slate-100">🗄️</div>
-                <p className="text-slate-500 font-black text-xl">Il registro è immacolato.</p>
-                <p className="text-sm text-slate-400 font-medium mt-2">Nessuna fattura è stata ancora generata dal sistema.</p>
-            </div>
-          ) : fattureFiltrate.length === 0 ? (
-            // STATO 2: Ricerca senza risultati
-            <div className="flex flex-col items-center justify-center p-20 text-center h-full animate-in fade-in">
-                <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center text-4xl mb-4 shadow-inner border border-indigo-100">🕵️</div>
-                <p className="text-indigo-900 font-black text-xl">Paziente non trovato.</p>
-                <p className="text-sm text-indigo-400 font-medium mt-2">Non ci sono fatture intestate a "{ricerca}".</p>
-                <button onClick={() => setRicerca('')} className="mt-6 text-xs font-black text-indigo-600 uppercase tracking-widest hover:underline">Azzera ricerca</button>
-            </div>
-          ) : (
-            // STATO 3: Lista popolata e filtrata
-            fattureFiltrate.map((f) => {
-              const nomePaziente = String(f?.paziente || "Paziente Ignoto");
-              const iniziale = nomePaziente.charAt(0).toUpperCase() || "P";
-              const isPagata = f.pagata;
+        )}
 
-              return (
-                <div 
-                    key={f.id_fattura} 
-                    className="p-6 lg:px-10 flex flex-col md:flex-row md:items-center justify-between hover:bg-slate-50 transition-all duration-300 group gap-4 cursor-default"
-                >
-                  <div className="flex items-center gap-6">
-                    <div className={`w-14 h-14 rounded-[1.5rem] flex items-center justify-center font-black text-xl shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shrink-0
-                        ${isPagata ? 'bg-emerald-50/80 text-emerald-600 border border-emerald-100' : 'bg-orange-50/80 text-orange-500 border border-orange-100'}`}>
-                      {iniziale}
-                    </div>
+        {/* --- SEZIONE PRESTAZIONI --- */}
+        {vista === 'prestazioni' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in slide-in-from-right-4 duration-500">
+            
+            {/* FORM AGGIUNTA RINNOVATO (Look SaaS Moderno) */}
+            <div className="lg:col-span-4">
+                <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/50 sticky top-8 group overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/5 rounded-full blur-3xl transition-transform duration-700 group-hover:scale-150 pointer-events-none"></div>
                     
-                    <div className="transition-transform duration-300 group-hover:translate-x-2">
-                      <p className="font-black text-slate-800 text-lg">{nomePaziente}</p>
-                      <div className="flex items-center gap-3 mt-1.5">
-                          <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-md font-black tracking-widest border border-slate-200">
-                              FT-{String(f.id_fattura).padStart(4, '0')}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1">
-                            <span className="text-slate-300">📅</span> {f.data_emissione ? new Date(f.data_emissione).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' }) : '--/--/----'}
-                          </span>
-                      </div>
+                    <div className="relative z-10">
+                        <h4 className="text-2xl font-black text-slate-800 tracking-tight">Nuovo Servizio</h4>
+                        <p className="text-xs text-slate-400 font-bold mb-8 leading-relaxed">Arricchisci il catalogo inserendo i dettagli della nuova prestazione.</p>
+                        
+                        <form onSubmit={aggiungiPrestazione} className="space-y-5">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nome Servizio</label>
+                                <div className="relative">
+                                    <span className="absolute inset-y-0 left-4 flex items-center text-slate-300">🩺</span>
+                                    <input required type="text" placeholder="Es. Visita Oculistica" 
+                                        className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-300 transition-all" 
+                                        value={nuovaPresta.nome_prestazione} onChange={e => setNuovaPresta({...nuovaPresta, nome_prestazione: e.target.value})} 
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Tariffa (€)</label>
+                                <div className="relative">
+                                    <span className="absolute inset-y-0 left-4 flex items-center text-slate-300">💶</span>
+                                    <input required type="number" placeholder="Es. 120" min="0"
+                                        className="w-full pl-11 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 focus:outline-none focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-300 transition-all" 
+                                        value={nuovaPresta.costo} onChange={e => setNuovaPresta({...nuovaPresta, costo: e.target.value})} 
+                                    />
+                                </div>
+                            </div>
+
+                            <button type="submit" disabled={isSubmitting} className="w-full mt-2 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-indigo-600 hover:to-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-xl shadow-slate-200 active:scale-95 disabled:opacity-50">
+                                {isSubmitting ? 'Salvataggio in corso...' : 'Aggiungi al listino'}
+                            </button>
+                        </form>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between md:justify-end gap-8 border-t border-slate-100 md:border-0 pt-4 md:pt-0 transition-transform duration-300 group-hover:-translate-x-2">
-                    <p className="font-black text-slate-900 text-2xl tracking-tighter">€{f.importo}</p>
-                    
-                    <span className={`w-32 justify-center text-[10px] font-black px-4 py-2.5 rounded-xl flex items-center gap-2 uppercase tracking-[0.2em] border shadow-sm transition-colors duration-300
-                        ${isPagata ? 'bg-emerald-50 text-emerald-700 border-emerald-200 group-hover:bg-emerald-500 group-hover:text-white' : 'bg-orange-50 text-orange-700 border-orange-200 group-hover:bg-orange-500 group-hover:text-white'}`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${isPagata ? 'bg-emerald-500 group-hover:bg-white' : 'bg-orange-500 animate-pulse group-hover:bg-white'}`}></div>
-                      {isPagata ? 'SALDATA' : 'SOSPESA'}
-                    </span>
-                  </div>
                 </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-      
+            </div>
+
+            {/* TABELLA LISTINO CON TOGGLE SWITCH */}
+            <div className="lg:col-span-8 bg-white rounded-[3rem] border border-slate-100 shadow-xl overflow-hidden animate-in fade-in">
+                <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                    <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">Listino Ufficiale</h3>
+                    <div className="text-[10px] bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-full font-black border border-indigo-100">{dati.prestazioni.length} Servizi Totali</div>
+                </div>
+                
+                <div className="divide-y divide-slate-50">
+                    {dati.prestazioni.map(p => (
+                        <div key={p.id_prestazione} className="p-6 flex justify-between items-center hover:bg-slate-50/50 transition-colors">
+                            <div className="flex items-center gap-5">
+                                <div className={`w-12 h-12 rounded-[1.2rem] flex items-center justify-center text-xl shadow-inner transition-colors duration-300 ${p.is_active ? 'bg-indigo-50/80 text-indigo-500' : 'bg-slate-100 text-slate-300'}`}>
+                                    {getIconaPrestazione(p.nome_prestazione)}
+                                </div>
+                                <div>
+                                    <p className={`font-black text-lg transition-colors duration-300 ${p.is_active ? 'text-slate-800' : 'text-slate-300 line-through'}`}>{p.nome_prestazione}</p>
+                                    <p className={`font-black mt-0.5 transition-colors duration-300 ${p.is_active ? 'text-indigo-600' : 'text-slate-400'}`}>€{p.costo}</p>
+                                </div>
+                            </div>
+                            
+                            {/* TOGGLE SWITCH STILE iOS */}
+                            <div className="flex items-center gap-4">
+                                <span className={`text-[10px] font-black uppercase tracking-widest transition-colors duration-300 ${p.is_active ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                    {p.is_active ? 'Visibile' : 'Nascosto'}
+                                </span>
+                                
+                                <button 
+                                    onClick={() => togglePrestazione(p.id_prestazione)}
+                                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${p.is_active ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-slate-300 hover:bg-slate-400'}`}
+                                >
+                                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${p.is_active ? 'translate-x-8' : 'translate-x-1'}`} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

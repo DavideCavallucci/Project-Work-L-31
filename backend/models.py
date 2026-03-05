@@ -43,9 +43,6 @@ class Medico(Base):
     nome = Column(String, nullable=False)
     cognome = Column(String, nullable=False)
     specializzazione = Column(String, nullable=False)
-    # 🌟 Aggiunta matricola per realismo accademico
-    matricola_ordine = Column(String, unique=True, nullable=True)
-
     utente = relationship("Utente")
     prenotazioni = relationship("Prenotazione", back_populates="medico")
 
