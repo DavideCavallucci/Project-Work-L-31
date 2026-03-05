@@ -19,3 +19,4 @@ uvicorn
 gunicorn
 psycopg2-binary
 sqlalchemy
+reportlab
