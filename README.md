@@ -16,9 +16,12 @@
 2. [Architettura Tecnica](#-architettura-tecnica)
 3. [Funzionalità Principali](#-funzionalità-principali)
 4. [Infrastruttura e Database](#-infrastruttura-e-database)
-5. [Guida all'Installazione](#-guida-allinstallazione)
-6. [Sicurezza e Integrità dei Dati](#-sicurezza-e-integrità-dei-dati)
-7. [Struttura del Design](#-struttura-del-design)
+5. [Sicurezza e Integrità dei Dati](#-sicurezza-e-integrità-dei-dati)
+6. [Struttura del Design](#-struttura-del-design)
+7. [Guida all'Installazione](#-guida-allinstallazione)
+8. [Progettazione e Modellazione](#-progettazione-e-modellazione)
+9. [Deployment & Risorse Cloud](#-deployment-&-risorse-cloud)
+
 
 ---
 
@@ -77,6 +80,50 @@ Il modello ER è stato progettato per garantire la **normalizzazione dei dati** 
 
 ---
 
+## 🔒 Sicurezza e Integrità dei Dati
+
+* **Protezione degli Accessi (CORS):** È stato implementato un sistema di filtri (CORS) che permette al Backend di rispondere esclusivamente alle chiamate provenienti dal nostro Frontend autorizzato. Questo impedisce a siti esterni o malintenzionati di interrogare il server e tentare di sottrarre dati.
+* **Privacy e Data Masking:** Per garantire la riservatezza, i dati sensibili non vengono mai esposti inutilmente. Ad esempio, nei log di sistema o nelle anteprime, le informazioni critiche vengono oscurate o sintetizzate, seguendo il principio di "minimizzazione del dato" previsto dal GDPR.
+* **Solidità del Database (Vincoli di Integrità):** Grazie all'uso di chiavi esterne (Foreign Keys), il database impedisce errori umani o di sistema che potrebbero corrompere i dati. Ad esempio:
+  * Non è possibile eliminare un medico se ci sono visite programmate con lui.
+  * Una fattura non può esistere senza un appuntamento collegato.
+  * Ogni referto è "blindato" alla specifica prenotazione del paziente, rendendo impossibile lo scambio accidentale di cartelle cliniche tra utenti diversi.
+
+---
+
+Certamente! Eleviamo il tono di questa sezione parlando di come il design non sia solo "estetica", ma uno strumento fondamentale per prevenire l'errore umano in contesti critici come quello sanitario.
+
+Ecco una versione che mette in risalto la tua competenza in **UX/UI Design** e **Human-Centered Design**:
+
+---
+
+### 🧑‍🎨 Struttura del Design
+
+Il progetto è stato sviluppato adottando i paradigmi del **Human-Centered Design (HCD)**, con l'obiettivo di dimostrare come un'interfaccia curata possa ridurre drasticamente il carico cognitivo dell'operatore sanitario e il rischio clinico per il paziente.
+
+**Punti chiave della progettazione:**
+
+  * **Architettura dell'Informazione e Gerarchia Visiva:** L'uso di card differenziate e di una palette cromatica semantica (es. rosso per le allergie, verde per lo stato saldato) permette una scansione rapida delle informazioni vitali, riducendo i tempi di reazione del medico e prevenendo sviste diagnostiche.
+  * **Design Inclusivo e Accessibilità:** Seguendo i principi del **Material Design**, l'interfaccia garantisce elevati contrasti e una leggibilità ottimale dei dati clinici, assicurando che la piattaforma sia fruibile in diverse condizioni di illuminazione e su molteplici dispositivi.
+  * **Affordance e Micro-interazioni:** Ogni elemento interattivo (come i toggle switch per l'attivazione dei servizi o i bottoni di firma del referto) è stato progettato per fornire un feedback immediato all'utente, eliminando l'incertezza e migliorando l'efficienza operativa del workflow ospedaliero.
+
+---
+
+## 📐 Progettazione e Modellazione
+
+Il design del sistema è stato preceduto da una fase di modellazione formale per garantire la coerenza dei dati e dei processi.
+
+| Diagramma | Tool | Link |
+| :--- | :--- | :--- |
+| **Schema E-R (Entity-Relationship)** | dbdiagram.io | [📊 Visualizza lo Schema DB]([https://dbdiagram.io/d/tuo-link-qui](https://dbdiagram.io/d/Project-Work-Schema-ER-69a6c5a2a3f0aa31e1a5c6b4)) |
+| **Diagrammi UML (Casi d'Uso/Sequenza)** | Mermaid.js | [🔄 Esplora i Diagrammi UML](https://mermaid.live/edit#tuo-link-qui) |
+
+### Logica di Progettazione
+* **Modello E-R:** Lo schema è stato progettato per supportare la coerenza transazionale. Ogni entità (Utente, Paziente, Medico, Prenotazione, Referto, Fattura) rispetta le forme normali per evitare ridondanze e anomalie di aggiornamento.
+* **Diagrammi UML:** Sono stati modellati i principali casi d'uso (Use Case Diagram) per definire i permessi degli attori (Paziente vs Medico vs Admin) e i diagrammi di sequenza per mappare il flusso di refertazione e fatturazione elettronica.
+
+---
+
 ## 🚀 Guida all'Installazione
 
 ### 1. Requisiti
@@ -106,31 +153,14 @@ npm run dev
 ```
 ---
 
-## 🔒 Sicurezza e Integrità dei Dati
+## 🌐 Deployment & Risorse Cloud
 
-* **Protezione degli Accessi (CORS):** È stato implementato un sistema di filtri (CORS) che permette al Backend di rispondere esclusivamente alle chiamate provenienti dal nostro Frontend autorizzato. Questo impedisce a siti esterni o malintenzionati di interrogare il server e tentare di sottrarre dati.
-* **Privacy e Data Masking:** Per garantire la riservatezza, i dati sensibili non vengono mai esposti inutilmente. Ad esempio, nei log di sistema o nelle anteprime, le informazioni critiche vengono oscurate o sintetizzate, seguendo il principio di "minimizzazione del dato" previsto dal GDPR.
-* **Solidità del Database (Vincoli di Integrità):** Grazie all'uso di chiavi esterne (Foreign Keys), il database impedisce errori umani o di sistema che potrebbero corrompere i dati. Ad esempio:
-  * Non è possibile eliminare un medico se ci sono visite programmate con lui.
-  * Una fattura non può esistere senza un appuntamento collegato.
-  * Ogni referto è "blindato" alla specifica prenotazione del paziente, rendendo impossibile lo scambio accidentale di cartelle cliniche tra utenti diversi.
+Per facilitare la revisione del progetto, sono stati predisposti i seguenti punti di accesso alle risorse live:
 
----
-
-Certamente! Eleviamo il tono di questa sezione parlando di come il design non sia solo "estetica", ma uno strumento fondamentale per prevenire l'errore umano in contesti critici come quello sanitario.
-
-Ecco una versione che mette in risalto la tua competenza in **UX/UI Design** e **Human-Centered Design**:
-
----
-
-### 🧑‍🎨 Struttura del Design
-
-Il progetto è stato sviluppato adottando i paradigmi del **Human-Centered Design (HCD)**, con l'obiettivo di dimostrare come un'interfaccia curata possa ridurre drasticamente il carico cognitivo dell'operatore sanitario e il rischio clinico per il paziente.
-
-**Punti chiave della progettazione:**
-
-  * **Architettura dell'Informazione e Gerarchia Visiva:** L'uso di card differenziate e di una palette cromatica semantica (es. rosso per le allergie, verde per lo stato saldato) permette una scansione rapida delle informazioni vitali, riducendo i tempi di reazione del medico e prevenendo sviste diagnostiche.
-  * **Design Inclusivo e Accessibilità:** Seguendo i principi del **Material Design**, l'interfaccia garantisce elevati contrasti e una leggibilità ottimale dei dati clinici, assicurando che la piattaforma sia fruibile in diverse condizioni di illuminazione e su molteplici dispositivi.
-  * **Affordance e Micro-interazioni:** Ogni elemento interattivo (come i toggle switch per l'attivazione dei servizi o i bottoni di firma del referto) è stato progettato per fornire un feedback immediato all'utente, eliminando l'incertezza e migliorando l'efficienza operativa del workflow ospedaliero.
+| Risorsa | Piattaforma | Link Diretto |
+| :--- | :--- | :--- |
+| **Frontend Live** | Netlify | [🚀 Vai all'App](https://69a82fba9bbbf37cfc2aeb51--medcloud-pw.netlify.app) |
+| **Documentazione API** | Swagger UI | [📖 Esplora gli Endpoint](https://project-work-l-31.onrender.com/docs) |
+| **Database Console** | Neon.tech | [🐘 Gestione PostgreSQL]([https://console.neon.tech/](https://console.neon.tech/app/projects/dawn-poetry-37386529)) |
 
 ---
