@@ -102,7 +102,9 @@ Il design del sistema è stato preceduto da una fase di modellazione formale per
 | Diagramma | Tool | Link |
 | :--- | :--- | :--- |
 | **Schema E-R (Entity-Relationship)** | dbdiagram.io | [📊 Visualizza lo Schema DB](https://dbdiagram.io/d/Project-Work-Schema-ER-69a6c5a2a3f0aa31e1a5c6b4) |
-| **Diagrammi UML (Casi d'Uso/Sequenza)** | Mermaid.js | [🔄 Esplora i Diagrammi UML](https://mermaid.live/edit#tuo-link-qui) |
+| **Diagrammi UML (Diagramma delle Classi)** | Mermaid.js | [🔄 Guarda il Diagramma delle Classi](https://mermaid.ai/d/9c4a354b-9ab0-420b-9336-9a7db87bbf4b) |
+| **Diagrammi UML (Diagramma di Sequenza)** | Mermaid.js | [🔄 Esplora il Diagramma di Sequenza del Medico](https://mermaid.ai/d/3efba05a-d524-4ba1-987f-3b7e6a9463ee) |
+| **Diagrammi UML (Diagramma di Sequenza)** | Mermaid.js | [🔄 Esplora il Diagramma di Sequenza del Paziente](https://mermaid.ai/d/c280a9f3-cd5a-4c91-881f-8efa54152885) |
 
 ### Logica di Progettazione
 * **Modello E-R:** Lo schema è stato progettato per supportare la coerenza transazionale. Ogni entità (Utente, Paziente, Medico, Prenotazione, Referto, Fattura) rispetta le forme normali per evitare ridondanze e anomalie di aggiornamento.
