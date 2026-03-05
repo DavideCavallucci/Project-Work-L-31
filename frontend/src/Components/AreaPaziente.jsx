@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 
 // --- MOTORE DI LOGICA DINAMICA ---
 
-// Determina l'icona in base al tipo di visita
 const getIconaPrestazione = (nome) => {
     const n = nome?.toLowerCase() || "";
     if (n.includes('cardio')) return '🫀';
@@ -18,7 +17,6 @@ const getIconaPrestazione = (nome) => {
     return '🩺';
 };
 
-// Determina se è Dott. o Dott.ssa in base al nome
 const getTitoloMedico = (nome) => {
     if (!nome) return "Dott.";
     const n = nome.trim().toLowerCase();
@@ -28,7 +26,6 @@ const getTitoloMedico = (nome) => {
     return "Dott.";
 };
 
-// Determina l'icona maschio/femmina
 const getIconaMedico = (nome) => {
     if (!nome) return '🧑‍⚕️';
     const titolo = getTitoloMedico(nome);
@@ -36,10 +33,13 @@ const getIconaMedico = (nome) => {
 };
 
 export default function AreaPaziente({ utente }) {
-  const apiUrl = "https://project-work-l-31.onrender.com";
+  // LOGICA TESI: Gestione dinamica dell'URL API
+  const apiUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://127.0.0.1:8000" 
+  : "https://project-work-l-31.onrender.com";
 
   const [vista, setVista] = useState('prenota');
-  const [dati, setDati] = useState({ medici: [], prestazioni: [], cartella: [], fatture: [] });
+  const [dati, setDati] = useState({ medici: [], prestazioni: [], cartella: [], fatture: [], anamnesi: null });
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [payingId, setPayingId] = useState(null);
@@ -49,6 +49,7 @@ export default function AreaPaziente({ utente }) {
   const orariDisponibili = ["09:00", "10:00", "11:00", "12:00", "15:00", "16:00", "17:00", "18:00"];
 
   const caricaDatiIniziali = async () => {
+    if (!utente?.id_collegato) return;
     try {
       setLoading(true);
       const [resMed, resPre, resCar, resFat] = await Promise.all([
@@ -57,12 +58,30 @@ export default function AreaPaziente({ utente }) {
         fetch(`${apiUrl}/api/pazienti/${utente.id_collegato}/cartella`),
         fetch(`${apiUrl}/api/pazienti/${utente.id_collegato}/fatture`)
       ]);
+      
+      const cartellaDati = await resCar.json();
+      
+      // 🌟 ESTRAZIONE ANAMNESI ROBUSTA (Fix per hasOwnProperty)
+      let anamnesiEstratta = { sangue: "N.D.", allergie: "Nessuna allergia nota" };
+      
+      if (Array.isArray(cartellaDati) && cartellaDati.length > 0) {
+           // Usiamo il controllo diretto sulle chiavi per evitare errori di prototipo
+           const recordValido = cartellaDati.find(c => c.gruppo_sanguigno !== undefined || c.allergie !== undefined);
+           
+           if(recordValido){
+               anamnesiEstratta = { 
+                   sangue: recordValido.gruppo_sanguigno || "N.D.", 
+                   allergie: recordValido.allergie || "Nessuna allergia nota" 
+                };
+           }
+      }
 
       setDati({
         medici: await resMed.json(),
         prestazioni: await resPre.json(),
-        cartella: await resCar.json(),
-        fatture: await resFat.json()
+        cartella: cartellaDati,
+        fatture: await resFat.json(),
+        anamnesi: anamnesiEstratta
       });
     } catch (err) {
       console.error("Errore caricamento dati:", err);
@@ -72,11 +91,8 @@ export default function AreaPaziente({ utente }) {
   };
 
   useEffect(() => {
-    if (utente?.id_collegato) {
-      caricaDatiIniziali();
-    } else {
-      setLoading(false);
-    }
+    caricaDatiIniziali();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [utente]);
 
   const confermaPrenotazione = async () => {
@@ -110,6 +126,7 @@ export default function AreaPaziente({ utente }) {
         const errorData = await res.json();
         alert(`🚨 Attenzione: ${errorData.detail || "Errore nella prenotazione"}`);
       }
+    // eslint-disable-next-line no-unused-vars
     } catch (err) {
       alert("Errore di connessione al server.");
     } finally {
@@ -126,6 +143,7 @@ export default function AreaPaziente({ utente }) {
         alert("💳 Pagamento elaborato!");
         await caricaDatiIniziali();
       }
+    // eslint-disable-next-line no-unused-vars
     } catch (err) {
       alert("Errore durante il pagamento.");
     } finally {
@@ -147,7 +165,7 @@ export default function AreaPaziente({ utente }) {
 
   const nomePaziente = String(utente?.nome_completo || "Paziente");
   const iniziale = nomePaziente.charAt(0).toUpperCase() || "U";
-  const visiteFuture = dati.cartella.filter(c => c.stato === 'PROGRAMMATA').length;
+  const visiteFuture = Array.isArray(dati.cartella) ? dati.cartella.filter(c => c.stato === 'PROGRAMMATA').length : 0;
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-700 pb-12">
@@ -192,10 +210,85 @@ export default function AreaPaziente({ utente }) {
           <button onClick={() => setVista('pagamenti')} className={`px-6 md:px-8 py-3 rounded-xl text-xs font-black transition-all duration-300 ${vista === 'pagamenti' ? 'bg-white text-blue-800 shadow-xl scale-105' : 'text-white hover:bg-white/10'}`}>
             💳 PAGAMENTI
           </button>
+          {/* 🌟 NUOVO TASTO PER IL PROFILO CLINICO */}
+          <button onClick={() => setVista('profilo')} className={`px-6 md:px-8 py-3 rounded-xl text-xs font-black transition-all duration-300 ${vista === 'profilo' ? 'bg-white text-blue-800 shadow-xl scale-105' : 'text-white hover:bg-white/10'}`}>
+            🧬 PROFILO CLINICO
+          </button>
         </div>
       </header>
 
       <main className="min-h-[500px]">
+        
+        {/* --- VISTA PROFILO CLINICO E ANAMNESI --- */}
+        {vista === 'profilo' && (
+           <div className="space-y-8 animate-in fade-in duration-500">
+                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest ml-4">Il tuo Profilo Sanitario</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Card Informazioni Anagrafiche di base */}
+                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
+                        <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-2xl mb-6">👤</div>
+                        <h3 className="text-2xl font-black text-slate-800 mb-6">Dati Identificativi</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nome Completo</p>
+                                <p className="text-lg font-black text-slate-900">{nomePaziente}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">ID Paziente Sistema</p>
+                                <p className="text-lg font-black text-slate-900 font-mono bg-slate-50 px-3 py-1 rounded-lg inline-block border border-slate-200">
+                                    {String(utente?.id_collegato).padStart(5, '0')}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Card Anamnesi Clinica Estesa */}
+                    <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden border border-slate-700">
+                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                         
+                         <div className="relative z-10">
+                            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-2xl mb-6 border border-white/10">🧬</div>
+                            <h3 className="text-2xl font-black text-white mb-6">Anamnesi Medica</h3>
+                            
+                            <div className="space-y-6">
+                                <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                                    <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        🩸 Gruppo Sanguigno
+                                    </p>
+                                    <p className="text-3xl font-black text-white tracking-tighter">
+                                        {dati.anamnesi?.sangue || "N.D."}
+                                    </p>
+                                </div>
+
+                                <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
+                                    <p className="text-[10px] font-bold text-blue-300 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        ⚠️ Avvisi Allergie Note
+                                    </p>
+                                    {dati.anamnesi?.allergie && dati.anamnesi.allergie.toLowerCase() !== "nessuna" ? (
+                                        <div className="flex items-center gap-3 text-red-400 font-black text-lg">
+                                            <span>!</span>
+                                            {dati.anamnesi.allergie}
+                                        </div>
+                                    ) : (
+                                        <p className="text-emerald-400 font-black text-lg flex items-center gap-2">
+                                            ✅ Nessuna allergia segnalata
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                         </div>
+                    </div>
+                </div>
+                
+                <div className="bg-blue-50/50 border border-blue-100 p-6 rounded-[2rem] flex items-center gap-4 text-blue-800">
+                    <span className="text-2xl">ℹ️</span>
+                    <p className="text-sm font-medium">Questi dati vengono condivisi in modo sicuro con il personale medico prima di ogni tua visita per garantire la massima sicurezza nei trattamenti.</p>
+                </div>
+           </div>
+        )}
+
+        {/* --- VISTA PRENOTA --- */}
         {vista === 'prenota' && (
           <div className="space-y-12">
             {/* STEP 1: PRESTAZIONE */}
@@ -291,14 +384,12 @@ export default function AreaPaziente({ utente }) {
         {vista === 'cartella' && (
           <div className="space-y-6 animate-in fade-in duration-500">
             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest ml-4">Storico Salute</h4>
-            {dati.cartella.length === 0 ? (
+            {!dati.cartella || dati.cartella.length === 0 ? (
                 <div className="p-20 text-center bg-white rounded-[3rem] border border-slate-100"><p className="text-slate-400 font-black">Nessun documento.</p></div>
             ) : (
                 <div className="space-y-4">
                     {dati.cartella.map(c => {
                         const isCompletata = c.stato === 'COMPLETATA';
-                        // Estraggono il nome dal database (di solito è "Cognome" o "Dott. Cognome")
-                        // Per sicurezza applichiamo la logica del titolo anche qui
                         const medicoPuro = c.medico?.replace('Dott. ', '').replace('Dott.ssa ', '').trim();
                         return (
                             <div key={c.id_prenotazione} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-6">
@@ -341,7 +432,7 @@ export default function AreaPaziente({ utente }) {
         {vista === 'pagamenti' && (
             <div className="space-y-6 animate-in fade-in duration-500">
                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest ml-4">Pagamenti</h4>
-                {dati.fatture.length === 0 ? (
+                {!dati.fatture || dati.fatture.length === 0 ? (
                     <div className="p-20 text-center bg-white rounded-[3rem] border border-slate-100"><p className="text-slate-400 font-black">Nessuna fattura.</p></div>
                 ) : (
                     <div className="space-y-4">
