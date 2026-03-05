@@ -12,13 +12,13 @@
 
 ## 📋 Indice
 
-1. [Vision del Progetto](#vision-del-progetto)
-2. [Architettura Tecnica](#architettura-tecnica)
-3. [Funzionalità Principali](#funzionalità-principali)
-4. [Infrastruttura e Database](#infrastruttura-e-database)
-5. [Guida all'Installazione](#guida-all'installazione)
-6. [Sicurezza e Integrità dei Dati](#sicurezza-e-integrità-dei-dati)
-7. [Struttura del Design](#struttura-del-design)
+1. [Vision del Progetto](#-vision-del-progetto)
+2. [Architettura Tecnica](#-architettura-tecnica)
+3. [Funzionalità Principali](#-funzionalità-principali)
+4. [Infrastruttura e Database](#-infrastruttura-e-database)
+5. [Guida all'Installazione](#-guida-allinstallazione)
+6. [Sicurezza e Integrità dei Dati](#-sicurezza-e-integrità-dei-dati)
+7. [Struttura del Design](#-struttura-del-design)
 
 ---
 
