@@ -9,10 +9,9 @@ class Utente(Base):
     id_utente = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    ruolo = Column(String, default="PAZIENTE") # PAZIENTE, MEDICO, ADMIN
+    ruolo = Column(String, default="PAZIENTE") # PAZIENTE, MEDICO
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    # 🌟 Campo extra per logica di sessione (facoltativo ma professionale)
     ultimo_accesso = Column(DateTime, nullable=True)
 
     paziente = relationship("Paziente", back_populates="utente", uselist=False)
@@ -25,12 +24,10 @@ class Paziente(Base):
     nome = Column(String, nullable=False)
     cognome = Column(String, nullable=False)
     codice_fiscale = Column(String, unique=True, index=True)
-    
-    # 🌟 NUOVI CAMPI ANAGRAFICI E CLINICI (Anamnesi)
     data_nascita = Column(Date, nullable=True)
     telefono = Column(String, nullable=True)
-    gruppo_sanguigno = Column(String, nullable=True) # Es: "A+", "0-"
-    allergie = Column(Text, nullable=True) # Text permette descrizioni lunghe
+    gruppo_sanguigno = Column(String, nullable=True)
+    allergie = Column(Text, nullable=True)
     patologie_pregresse = Column(Text, nullable=True)
 
     utente = relationship("Utente", back_populates="paziente")
@@ -44,6 +41,7 @@ class Medico(Base):
     cognome = Column(String, nullable=False)
     specializzazione = Column(String, nullable=False)
     utente = relationship("Utente")
+
     prenotazioni = relationship("Prenotazione", back_populates="medico")
 
 class Prestazione(Base):
@@ -52,8 +50,7 @@ class Prestazione(Base):
     id_prestazione = Column(Integer, primary_key=True, index=True)
     nome_prestazione = Column(String, nullable=False)
     costo = Column(Integer, nullable=False)
-    # 🌟 SOFT DELETE: Permette di "ritirare" una prestazione senza rompere lo storico
-    is_active = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True) # SOFT DELETE: Permette di "ritirare" una prestazione senza rompere lo storico
 
     prenotazioni = relationship("Prenotazione", back_populates="prestazione")
 
@@ -65,7 +62,7 @@ class Prenotazione(Base):
     id_medico = Column(Integer, ForeignKey("medici.id_medico"), nullable=False)
     id_prestazione = Column(Integer, ForeignKey("prestazioni.id_prestazione"), nullable=False)
     data_ora = Column(DateTime, nullable=False)
-    stato = Column(String, default="PROGRAMMATA") # PROGRAMMATA, COMPLETATA, ANNULLATA
+    stato = Column(String, default="PROGRAMMATA") # PROGRAMMATA, COMPLETATA
 
     paziente = relationship("Paziente")
     medico = relationship("Medico", back_populates="prenotazioni")
@@ -78,8 +75,7 @@ class Referto(Base):
     id_prenotazione = Column(Integer, ForeignKey("prenotazioni.id_prenotazione"), unique=True, nullable=False)
     esito_visita = Column(Text, nullable=False) # Cambiato in Text per referti lunghi
     prescrizioni = Column(Text, nullable=True)
-    # 🌟 Placeholder per il file (fondamentale nello schema ER)
-    file_path_pdf = Column(String, nullable=True)
+    file_path_pdf = Column(String, nullable=True) # Non utilizzato ma presente nello schema ER per future implementazioni
 
     prenotazione = relationship("Prenotazione")
 

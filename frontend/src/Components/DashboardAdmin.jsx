@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 
-// --- MOTORE DI LOGICA DINAMICA ADMIN ---
 const getIconaPrestazione = (nome) => {
     const n = nome?.toLowerCase() || "";
     if (n.includes('cardio')) return '🫀';
@@ -62,7 +61,7 @@ export default function DashboardAdmin() {
     
     setSollecitoInviato(true);
     setTimeout(() => {
-        alert("✅ Email di sollecito inviate con successo!");
+        alert("Email di sollecito inviate con successo!");
         setSollecitoInviato(false);
     }, 2000);
   };
@@ -86,7 +85,6 @@ export default function DashboardAdmin() {
     } catch (err) { alert("Errore connessione."); } finally { setIsSubmitting(false); }
   };
 
-  // 🌟 Rimosso 'statoAttuale' che non ci serve più
   const togglePrestazione = async (id) => {
     try {
       const res = await fetch(`${apiUrl}/api/prestazioni/${id}/toggle`, { method: 'PATCH' });
@@ -95,7 +93,6 @@ export default function DashboardAdmin() {
     } catch (err) { alert("Errore aggiornamento."); }
   };
 
-  // --- MOTORE KPI E FILTRI ---
   const safeFatture = dati.fatture;
   
   const totaleEmesso = safeFatture.reduce((s, f) => s + (Number(f.importo) || 0), 0);
@@ -119,7 +116,7 @@ export default function DashboardAdmin() {
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20">
       
-      {/* HEADER FINTECH ESSENZIALE */}
+      {/* HEADER */}
       <header className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 rounded-[3rem] p-10 lg:p-12 text-white shadow-2xl relative overflow-hidden border border-white/10">
         <div className="absolute -top-[50%] -right-[10%] w-[70%] h-[150%] bg-indigo-500/20 blur-[120px] rounded-full pointer-events-none"></div>
         <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
@@ -129,7 +126,7 @@ export default function DashboardAdmin() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
-                    <span className="text-[10px] font-black tracking-[0.2em] uppercase text-indigo-100">Live • Command Center</span>
+                    <span className="text-[10px] font-black tracking-[0.2em] uppercase text-indigo-100">Live • Centro di Controllo</span>
                 </div>
                 <div>
                     <h2 className="text-5xl lg:text-6xl font-black tracking-tighter">MedCloud Dashboard</h2>
@@ -150,10 +147,9 @@ export default function DashboardAdmin() {
       </div>
 
       <main>
-        {/* --- SEZIONE FINANZA --- */}
+        {/* --- SEZIONE FINANZIARIA --- */}
         {vista === 'finanza' && (
           <div className="space-y-10">
-            {/* KPI CARDS */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-5 bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-[3rem] shadow-2xl text-white overflow-hidden border border-white/10 relative group">
                   <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform duration-700 group-hover:scale-150"></div>
@@ -249,7 +245,7 @@ export default function DashboardAdmin() {
         {vista === 'prestazioni' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in slide-in-from-right-4 duration-500">
             
-            {/* FORM AGGIUNTA RINNOVATO (Look SaaS Moderno) */}
+            {/* FORM AGGIUNTA PRESTAZIONE */}
             <div className="lg:col-span-4">
                 <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-2xl shadow-slate-200/50 sticky top-8 group overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/5 rounded-full blur-3xl transition-transform duration-700 group-hover:scale-150 pointer-events-none"></div>

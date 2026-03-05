@@ -4,7 +4,7 @@ import DashboardMedico from './Components/DashboardMedico'
 import DashboardAdmin from './Components/DashboardAdmin'
 import Footer from './Components/Footer'
 
-// 🎨 CONFIGURAZIONE ELITE UX
+// CONFIGURAZIONE PANNELLO DI CONTROLLO LATERALE
 const UX_CONFIG = {
   paziente: {
     colore: 'blue',
@@ -76,7 +76,6 @@ function App() {
     } catch (err) { alert(err.message); } finally { setIsLoggingIn(false); }
   };
 
-  // 🌟 ECCO IL PEZZO CHE AVEVO PERSO! 🌟
   const eseguiLogout = () => {
     setUtentiLoggati(prev => ({ ...prev, [vistaAttiva]: null }));
   };
@@ -198,7 +197,7 @@ function App() {
       {/* LAYOUT PRINCIPALE */}
       <div className="max-w-[1400px] mx-auto px-8 py-16 flex flex-col lg:flex-row gap-16 flex-1 w-full">
         
-        {/* SIDEBAR BENTO STYLE */}
+        {/* SIDEBAR */}
         <aside className="w-full lg:w-80 space-y-4 shrink-0">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 ml-4">Terminale d'Accesso</p>
           

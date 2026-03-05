@@ -25,7 +25,7 @@ export default function Footer() {
               Garantiamo i più alti standard di sicurezza per i dati sensibili dei pazienti.
             </p>
 
-            {/* BADGES DI CONFORMITÀ (FONDAMENTALI PER LA TESI) */}
+            {/* BADGES DI CONFORMITÀ */}
             <div className="flex gap-3 pt-2">
                 <div className="px-3 py-1 bg-slate-900 border border-slate-800 rounded-md text-[9px] font-black text-slate-500 tracking-widest uppercase">GDPR Compliant</div>
                 <div className="px-3 py-1 bg-slate-900 border border-slate-800 rounded-md text-[9px] font-black text-slate-500 tracking-widest uppercase">HL7 Certified</div>
@@ -77,7 +77,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* BOTTOM BAR */}
+        {/* BOTTOM COPYRIGHT */}
         <div className="mt-20 pt-8 border-t border-slate-900 flex justify-center items-center text-center">
           <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
             © {currentYear} MedCloud Health Systems. Built for Excellence.

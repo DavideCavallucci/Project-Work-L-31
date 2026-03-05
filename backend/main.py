@@ -39,7 +39,7 @@ def get_db():
 
 @app.get("/")
 async def root():
-    return {"messaggio": "MedCloud Online - Backend Operativo"}
+    return {"messaggio": "MedCloud - Backend Operativo"}
 
 # --- LOGIN ---
 @app.post("/api/login", response_model=schemas.LoginResponse, tags=["Autenticazione"])
@@ -86,7 +86,9 @@ def get_prenotazioni(db: Session = Depends(get_db)):
         models.Paziente.nome, 
         models.Paziente.cognome,
         models.Paziente.gruppo_sanguigno, 
-        models.Paziente.allergie,         
+        models.Paziente.allergie,
+        models.Paziente.patologie_pregresse,
+        models.Paziente.telefono,            
         models.Prestazione.nome_prestazione
     ).join(models.Paziente, models.Prenotazione.id_paziente == models.Paziente.id_paziente)\
      .join(models.Prestazione, models.Prenotazione.id_prestazione == models.Prestazione.id_prestazione).all()
@@ -100,9 +102,11 @@ def get_prenotazioni(db: Session = Depends(get_db)):
             "stato": p.stato,
             "paziente_nome": f"{nome} {cognome}",
             "paziente_gruppo_sangue": gruppo_sanguigno, 
-            "paziente_allergie": allergie,               
+            "paziente_allergie": allergie,
+            "paziente_patologie": patologie_pregresse,
+            "paziente_telefono": telefono,             
             "tipo_visita": nome_prestazione
-        } for p, nome, cognome, gruppo_sanguigno, allergie, nome_prestazione in risultati
+        } for p, nome, cognome, gruppo_sanguigno, allergie, patologie_pregresse, telefono, nome_prestazione in risultati
     ]
 
 @app.get("/api/medici/{id_medico}/storico", tags=["Area Medica"])
@@ -147,7 +151,9 @@ def get_cartella_clinica(id_paziente: int, db: Session = Depends(get_db)):
             "prescrizioni": referto.prescrizioni if referto else "",
             "allergie": paz.allergie if paz else "Nessuna",
             "gruppo_sanguigno": paz.gruppo_sanguigno if paz else "N.D.",
-            "codice_fiscale": paz.codice_fiscale if paz else "N.A."
+            "codice_fiscale": paz.codice_fiscale if paz else "N.A.",
+            "patologie_pregresse": paz.patologie_pregresse if paz else "Nessuna",
+            "telefono": paz.telefono if paz and paz.telefono else "Non inserito"
         }
         storico.append(dati_visita)
         
@@ -278,19 +284,20 @@ def download_fattura_pdf(id_fattura: int, db: Session = Depends(get_db)):
     p.line(50, 370, 545, 370)
 
     # Totale
-    p.setFont(font_bold, 18)
     p.setFillColor(slate_900)
-    p.drawString(380, 330, "TOTALE:")
     p.setFont(font_bold, 24)
     p.drawRightString(530, 328, f"€ {fattura.importo}.00")
 
-    # Badge
+    # Bagde
     p.setFillColor(colors.HexColor("#ecfdf5"))
     p.setStrokeColor(emerald_500)
-    p.roundRect(50, 315, 200, 40, radius=8, fill=1, stroke=1)
+    p.roundRect(50, 310, 200, 45, radius=8, fill=1, stroke=1)
     p.setFillColor(emerald_500)
-    p.setFont(font_bold, 12)
-    p.drawString(65, 335, "✓ PAGAMENTO SALDATO")
+    p.setFont(font_bold, 11)
+    p.drawString(65, 338, "✓ PAGAMENTO SALDATO")
+    p.setFont(font_regular, 9)
+    data_pago = fattura.data_pagamento.strftime('%d/%m/%Y') if fattura.data_pagamento else fattura.data_emissione.strftime('%d/%m/%Y')
+    p.drawString(65, 324, f"Saldato in data: {data_pago}")
 
     # Footer
     p.setStrokeColor(slate_100)
@@ -319,6 +326,16 @@ def crea_prenotazione(prenotazione_in: schemas.PrenotazioneCreate, db: Session =
     db.commit()
     db.refresh(nuova_prenotazione)
     return nuova_prenotazione
+
+@app.patch("/api/prenotazioni/{id_prenotazione}/annulla", tags=["Prenotazioni"])
+def annulla_prenotazione(id_prenotazione: int, db: Session = Depends(get_db)):
+    pren = db.query(models.Prenotazione).filter(models.Prenotazione.id_prenotazione == id_prenotazione).first()
+    if not pren:
+        raise HTTPException(status_code=404, detail="Prenotazione non trovata")
+    
+    pren.stato = "ANNULLATA"
+    db.commit()
+    return {"messaggio": "Prenotazione annullata con successo"}
 
 @app.post("/api/referti", tags=["Area Medica"])
 def compila_referto(referto_in: schemas.RefertoCreate, db: Session = Depends(get_db)):

@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional # Importante per i campi non obbligatori
+from typing import Optional
 
-# --- SCHEMI PER IL LOGIN (Invariati) ---
+# --- SCHEMI PER IL LOGIN ---
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -14,14 +14,13 @@ class LoginResponse(BaseModel):
     nome_completo: str
     specializzazione: str | None = None
 
-# --- SCHEMI PER PAZIENTI (Aggiornati con Anamnesi) ---
+# --- SCHEMI PER PAZIENTI ---
 class PazienteCreate(BaseModel):
     email: str
     password: str
     nome: str
     cognome: str
     codice_fiscale: str
-    # 🌟 Nuovi campi anamnesi
     gruppo_sanguigno: Optional[str] = None
     allergie: Optional[str] = None
 
@@ -35,22 +34,22 @@ class PazienteResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# --- SCHEMI PER PRESTAZIONI (Aggiornati con Soft Delete) ---
+# --- SCHEMI PER PRESTAZIONI ---
 class PrestazioneCreate(BaseModel):
     nome_prestazione: str
     costo: int
-    is_active: bool = True # 🌟 Default attiva
+    is_active: bool = True
 
 class PrestazioneResponse(BaseModel):
     id_prestazione: int
     nome_prestazione: str
     costo: int
-    is_active: bool # 🌟 Fondamentale per l'Admin
+    is_active: bool
 
     class Config:
         from_attributes = True
 
-# --- ALTRI SCHEMI (Invariati o leggermente puliti) ---
+# --- SCHEMI PER PRENOTAZIONI ---
 class PrenotazioneCreate(BaseModel):
     id_paziente: int
     id_medico: int
@@ -69,13 +68,11 @@ class PrenotazioneResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# ... (Referto e Fattura rimangono uguali a meno che tu non voglia aggiungere altro)
-
 # --- SCHEMI PER REFERTI ---
 class RefertoCreate(BaseModel):
     id_prenotazione: int
     esito_visita: str
-    prescrizioni: str | None = None # Il | None significa che è opzionale
+    prescrizioni: str | None = None
 
 class RefertoResponse(BaseModel):
     id_referto: int
