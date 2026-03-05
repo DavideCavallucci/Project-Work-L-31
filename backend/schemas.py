@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional # Importante per i campi non obbligatori
 
-# --- SCHEMI PER IL LOGIN ---
+# --- SCHEMI PER IL LOGIN (Invariati) ---
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -9,27 +10,47 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     id_utente: int
     ruolo: str
-    id_collegato: int | None = None  # Sarà l'ID del Paziente o l'ID del Medico
+    id_collegato: int | None = None
     nome_completo: str
     specializzazione: str | None = None
 
-# Questo è il formato dei dati che il frontend ci manderà per registrare un paziente
+# --- SCHEMI PER PAZIENTI (Aggiornati con Anamnesi) ---
 class PazienteCreate(BaseModel):
     email: str
     password: str
     nome: str
     cognome: str
     codice_fiscale: str
+    # 🌟 Nuovi campi anamnesi
+    gruppo_sanguigno: Optional[str] = None
+    allergie: Optional[str] = None
 
-# Questo è il formato dei dati che noi restituiremo (senza inviare indietro la password!)
 class PazienteResponse(BaseModel):
     id_paziente: int
     nome: str
     cognome: str
+    gruppo_sanguigno: Optional[str]
+    allergie: Optional[str]
     
     class Config:
         from_attributes = True
 
+# --- SCHEMI PER PRESTAZIONI (Aggiornati con Soft Delete) ---
+class PrestazioneCreate(BaseModel):
+    nome_prestazione: str
+    costo: int
+    is_active: bool = True # 🌟 Default attiva
+
+class PrestazioneResponse(BaseModel):
+    id_prestazione: int
+    nome_prestazione: str
+    costo: int
+    is_active: bool # 🌟 Fondamentale per l'Admin
+
+    class Config:
+        from_attributes = True
+
+# --- ALTRI SCHEMI (Invariati o leggermente puliti) ---
 class PrenotazioneCreate(BaseModel):
     id_paziente: int
     id_medico: int
@@ -43,39 +64,12 @@ class PrenotazioneResponse(BaseModel):
     id_prestazione: int
     data_ora: datetime
     stato: str
+    paziente_nome: Optional[str] = None # Aggiunto per comodità frontend
 
     class Config:
         from_attributes = True
 
-# --- SCHEMI PER MEDICI ---
-class MedicoCreate(BaseModel):
-    email: str
-    password: str
-    nome: str
-    cognome: str
-    specializzazione: str
-
-class MedicoResponse(BaseModel):
-    id_medico: int
-    nome: str
-    cognome: str
-    specializzazione: str
-
-    class Config:
-        from_attributes = True
-
-# --- SCHEMI PER PRESTAZIONI ---
-class PrestazioneCreate(BaseModel):
-    nome_prestazione: str
-    costo: int
-
-class PrestazioneResponse(BaseModel):
-    id_prestazione: int
-    nome_prestazione: str
-    costo: int
-
-    class Config:
-        from_attributes = True
+# ... (Referto e Fattura rimangono uguali a meno che tu non voglia aggiungere altro)
 
 # --- SCHEMI PER REFERTI ---
 class RefertoCreate(BaseModel):
@@ -100,15 +94,5 @@ class FatturaResponse(BaseModel):
     pagata: bool
     data_emissione: datetime
 
-    class Config:
-        from_attributes = True
-
-class PromemoriaCreate(BaseModel):
-    id_prenotazione: int
-
-class PromemoriaResponse(BaseModel):
-    id_promemoria: int
-    id_prenotazione: int
-    attivo: bool
     class Config:
         from_attributes = True

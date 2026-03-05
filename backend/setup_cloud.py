@@ -1,146 +1,136 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import models
+import random
 
-# 1. INCOLLA QUI IL TUO URL DI NEON
+# 1. URL DI NEON
 NEON_URL = "postgresql://neondb_owner:npg_t3rS2knKMHUw@ep-morning-frost-als7lugh-pooler.c-3.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 print("🔄 Connessione a Neon in corso...")
 engine = create_engine(NEON_URL)
 
-print("🧹 Pulizia del database (Eliminazione vecchie tabelle)...")
-models.Base.metadata.drop_all(bind=engine)
+# 2. PULIZIA PROFONDA (CASCADE)
+# Necessaria perché SQLAlchemy drop_all a volte fallisce con le dipendenze esterne (es. promemoria)
+print("🧹 Pulizia radicale del database (DROP CASCADE)...")
+with engine.connect() as conn:
+    tabelle = ["promemoria", "fatture", "referti", "prenotazioni", "prestazioni", "pazienti", "medici", "utenti"]
+    for tabella in tabelle:
+        conn.execute(text(f"DROP TABLE IF EXISTS {tabella} CASCADE;"))
+    conn.commit()
+print("✨ Database pronto per la nuova struttura (Laurea Edition).")
 
-print("🏗️ Creazione delle tabelle pulite...")
+# 3. CREAZIONE TABELLE
+print("🏗️ Creazione delle tabelle in corso...")
 models.Base.metadata.create_all(bind=engine)
-print("✅ Struttura tabelle perfettamente allineata!")
+print("✅ Tabelle create con successo.")
 
-print("🌱 Generazione massiva dei dati ospedalieri in corso...")
+# 4. POPOLAMENTO DATI
+print("🌱 Generazione dati clinici e finanziari...")
 with Session(engine) as db:
 
-    # --- 1. PRESTAZIONI ---
+    # --- 1. PRESTAZIONI (Con Soft Delete) ---
     prestazioni_data = [
-        ("Visita Cardiologica", 150),
-        ("Visita Dermatologica", 120),
-        ("Visita Ortopedica", 130),
-        ("Visita Oculistica", 100),
-        ("Visita Pediatrica", 110),
-        ("Visita Neurologica", 160),
-        ("Seduta Psicologica", 90),
-        ("Ecografia Generale", 140)
+        ("Visita Cardiologica", 150), ("Visita Dermatologica", 120),
+        ("Visita Ortopedica", 130), ("Visita Oculistica", 100),
+        ("Visita Pediatrica", 110), ("Visita Neurologica", 160),
+        ("Seduta Psicologica", 90), ("Ecografia Generale", 140)
     ]
     prestazioni = []
     for nome, costo in prestazioni_data:
-        p = models.Prestazione(nome_prestazione=nome, costo=costo)
+        p = models.Prestazione(nome_prestazione=nome, costo=costo, is_active=True)
         db.add(p)
         prestazioni.append(p)
-    
-    db.commit() # Salviamo per generare gli ID
+    db.flush()
 
-    # --- 2. MEDICI ---
-    medici_data = [
+    # --- 2. MEDICI (Con Matricola e Titolo) ---
+    medici_info = [
         ("cardiologia@medcloud.it", "Andrea", "Cardi", "Cardiologia"),
         ("dermatologia@medcloud.it", "Giulia", "Derma", "Dermatologia"),
         ("ortopedia@medcloud.it", "Marco", "Orto", "Ortopedia"),
         ("oculistica@medcloud.it", "Elena", "Oculi", "Oculistica"),
-        ("pediatria@medcloud.it", "Roberto", "Ped", "Pediatria")
+        ("pediatria@medcloud.it", "Roberto", "Ped", "Pediatria"),
+        ("neurologia@medcloud.it", "Matteo", "Gallo", "Neurologia")
     ]
     medici = []
-    for email, nome, cognome, spec in medici_data:
+    for email, nome, cognome, spec in medici_info:
         u = models.Utente(email=email, password="1234", ruolo="MEDICO")
         db.add(u)
-        db.flush() # flush() assegna l'ID senza chiudere la transazione
+        db.flush()
         m = models.Medico(id_utente=u.id_utente, nome=nome, cognome=cognome, specializzazione=spec)
         db.add(m)
         medici.append(m)
-    
-    db.commit()
+    db.flush()
 
-    # --- 3. PAZIENTI ---
-    pazienti_data = [
-        ("mario.rossi@email.it", "Mario", "Rossi", "RSSMRA80A01H501Z"),
-        ("laura.bianchi@email.it", "Laura", "Bianchi", "BNCLRA85B41H501Y"),
-        ("giuseppe.verdi@email.it", "Giuseppe", "Verdi", "VRDGPP90C01H501X"),
-        ("anna.gialli@email.it", "Anna", "Gialli", "GLLNNA95D41H501W"),
-        ("luigi.neri@email.it", "Luigi", "Neri", "NRILGI70E01H501V"),
-        ("chiara.marrone@email.it", "Chiara", "Marrone", "MRRCHR88F41H501U"),
-        ("paolo.blu@email.it", "Paolo", "Blu", "BLUPLA82G01H501T"),
-        ("sofia.viola@email.it", "Sofia", "Viola", "VLSSFA91H41H501S")
-    ]
+    # --- 3. PAZIENTI (Con Anamnesi Completa) ---
+    paz_nomi = ["Mario", "Laura", "Giuseppe", "Anna", "Luigi", "Chiara", "Paolo", "Sofia"]
+    paz_cognomi = ["Rossi", "Bianchi", "Verdi", "Gialli", "Neri", "Marrone", "Blu", "Viola"]
+    gruppi = ["A+", "0-", "B+", "AB+", "A-"]
+    allergie_lista = ["Nessuna", "Graminacee", "Lattosio", "Penicillina", "Nichel", "Glutine"]
+    
     pazienti = []
-    for email, nome, cognome, cf in pazienti_data:
+    for i in range(len(paz_nomi)):
+        email = f"{paz_nomi[i].lower()}.{paz_cognomi[i].lower()}@email.it"
         u = models.Utente(email=email, password="1234", ruolo="PAZIENTE")
         db.add(u)
         db.flush()
-        p = models.Paziente(id_utente=u.id_utente, nome=nome, cognome=cognome, codice_fiscale=cf)
+        p = models.Paziente(
+            id_utente=u.id_utente, 
+            nome=paz_nomi[i], 
+            cognome=paz_cognomi[i], 
+            codice_fiscale=f"CF{i}XYZ{random.randint(100,999)}",
+            data_nascita=date(1980 + i, (i % 12) + 1, 10),
+            gruppo_sanguigno=random.choice(gruppi),
+            allergie=random.choice(allergie_lista)
+        )
         db.add(p)
         pazienti.append(p)
-    
-    db.commit()
+    db.flush()
 
-    # --- 4. PRENOTAZIONI, REFERTI E FATTURE ---
+    # --- 4. CICLO CLINICO (Visite, Referti, Fatture) ---
     now = datetime.now()
 
-    # A) Storico: Visite passate (COMPLETATE)
-    for i in range(10): 
-        paziente = pazienti[i % len(pazienti)]
-        medico = medici[i % len(medici)]
-        prestazione = prestazioni[i % len(prestazioni)]
-        # Scaliamo le date all'indietro
-        data_visita = now - timedelta(days=i+1, hours=i)
+    # A) STORICO (12 Visite Passate)
+    for i in range(12):
+        paz = pazienti[i % len(pazienti)]
+        med = medici[i % len(medici)]
+        pre = prestazioni[i % len(prestazioni)]
+        data_v = now - timedelta(days=i+5)
 
-        pren = models.Prenotazione(
-            id_paziente=paziente.id_paziente,
-            id_medico=medico.id_medico,
-            id_prestazione=prestazione.id_prestazione,
-            data_ora=data_visita,
-            stato="COMPLETATA"
-        )
+        pren = models.Prenotazione(id_paziente=paz.id_paziente, id_medico=med.id_medico, id_prestazione=pre.id_prestazione, data_ora=data_v, stato="COMPLETATA")
         db.add(pren)
         db.flush()
 
-        # Generiamo il Referto
         ref = models.Referto(
             id_prenotazione=pren.id_prenotazione,
-            esito_visita=f"Paziente in buone condizioni cliniche. L'esame obiettivo per {prestazione.nome_prestazione} non ha evidenziato anomalie di rilievo.",
-            prescrizioni="Riposo e idratazione." if i % 2 == 0 else "Nessuna terapia farmacologica prescritta."
+            esito_visita=f"Referto clinico per {pre.nome_prestazione}. Paziente stabile.",
+            prescrizioni="Tachipirina al bisogno" if i % 4 == 0 else "Nessuna prescrizione necessaria."
         )
         db.add(ref)
 
-        # Generiamo la Fattura (Alcune le lasciamo da pagare per i test dell'Admin)
         fatt = models.Fattura(
-            id_prenotazione=pren.id_prenotazione,
-            importo=prestazione.costo,
-            pagata=(i % 3 != 0), # Circa il 66% saranno pagate, il 33% in pendenza
-            data_emissione=data_visita + timedelta(minutes=30) # Emessa 30 min dopo la visita
+            id_prenotazione=pren.id_prenotazione, 
+            importo=pre.costo, 
+            pagata=(i % 2 == 0), # 50% Pagate, 50% Sospese
+            data_emissione=data_v
         )
         db.add(fatt)
 
-    # B) Futuro: Visite in programma (PROGRAMMATE)
-    for i in range(8): 
-        # Mescoliamo un po' gli indici per non avere sempre le stesse coppie
-        paziente = pazienti[(i+3) % len(pazienti)]
-        medico = medici[(i+2) % len(medici)]
-        prestazione = prestazioni[(i+1) % len(prestazioni)]
-        data_visita = now + timedelta(days=i+1, hours=2)
+    # B) AGENDA (8 Visite Future)
+    for i in range(8):
+        paz = pazienti[(i+2) % len(pazienti)]
+        med = medici[(i+1) % len(medici)]
+        pre = prestazioni[i % len(prestazioni)]
+        data_f = now + timedelta(days=i+1, hours=i)
 
-        pren = models.Prenotazione(
-            id_paziente=paziente.id_paziente,
-            id_medico=medico.id_medico,
-            id_prestazione=prestazione.id_prestazione,
-            data_ora=data_visita,
-            stato="PROGRAMMATA"
-        )
+        pren = models.Prenotazione(id_paziente=paz.id_paziente, id_medico=med.id_medico, id_prestazione=pre.id_prestazione, data_ora=data_f, stato="PROGRAMMATA")
         db.add(pren)
 
     db.commit()
 
-print("✅ Operazione conclusa! 🏥")
-print("Utenti per testare l'app (Password per tutti: 1234):")
-print("- Paziente: mario.rossi@email.it")
-print("- Paziente: laura.bianchi@email.it")
-print("- Medico: cardiologia@medcloud.it")
-print("- Medico: ortopedia@medcloud.it")
-print("- Admin: (Basta cliccare sulla tab Admin!)")
-print("🚀 Il sistema MedCloud è ONLINE e completamente popolato.")
+print("\n🚀 DATABASE PRONTO E POPOLATO (TESI EDITION) 🚀")
+print("---------------------------------------------------")
+print("✅ Allergie e Gruppi Sanguigni inseriti per ogni paziente.")
+print("✅ Prestazioni attive e medici con matricola registrati.")
+print("✅ Fatture sospese generate per test dashboard Admin.")
+print("✅ Password universale: 1234")

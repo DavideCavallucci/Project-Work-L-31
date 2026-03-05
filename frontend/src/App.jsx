@@ -4,49 +4,50 @@ import DashboardMedico from './Components/DashboardMedico'
 import DashboardAdmin from './Components/DashboardAdmin'
 import Footer from './Components/Footer'
 
-// 🎨 CONFIGURAZIONE DEI TEMI DINAMICI
+// 🎨 CONFIGURAZIONE ELITE UX
 const UX_CONFIG = {
   paziente: {
     colore: 'blue',
     bgAttivo: 'bg-blue-600',
-    ringFocus: 'focus:ring-blue-500',
-    textGradient: 'from-blue-600 to-cyan-500',
+    textGradient: 'from-blue-600 via-blue-500 to-cyan-400',
+    mesh: 'bg-blue-400/20',
     icona: '👤',
-    titolo: 'Portale Pazienti',
-    sottotitolo: 'I tuoi dati sanitari, sempre con te.'
+    titolo: 'Health Connect',
+    desc: 'Gestisci la tua salute con un click.',
+    caratteristica: 'Accesso istantaneo ai referti'
   },
   medico: {
     colore: 'teal',
     bgAttivo: 'bg-teal-600',
-    ringFocus: 'focus:ring-teal-500',
-    textGradient: 'from-teal-600 to-emerald-500',
+    textGradient: 'from-teal-600 via-emerald-500 to-teal-400',
+    mesh: 'bg-teal-400/20',
     icona: '🩺',
-    titolo: 'Area Medica',
-    sottotitolo: 'Gestione visite e refertazione clinica.'
+    titolo: 'Clinical Suite',
+    desc: 'L’eccellenza medica digitale.',
+    caratteristica: 'Refertazione smart in cloud'
   },
   admin: {
     colore: 'indigo',
     bgAttivo: 'bg-indigo-600',
-    ringFocus: 'focus:ring-indigo-500',
-    textGradient: 'from-indigo-600 to-purple-500',
+    textGradient: 'from-indigo-600 via-purple-500 to-indigo-400',
+    mesh: 'bg-indigo-400/20',
     icona: '📊',
-    titolo: 'Direzione Sanitaria',
-    sottotitolo: 'Controllo flussi e amministrazione.'
+    titolo: 'Management OS',
+    desc: 'Il cuore pulsante della struttura.',
+    caratteristica: 'Analisi finanziaria real-time'
   }
 };
 
 function App() {
   const apiUrl = "https://project-work-l-31.onrender.com";
-
-  const [statoBackend, setStatoBackend] = useState("In connessione...")
+  const [statoBackend, setStatoBackend] = useState("Sincronizzazione...")
   const [vistaAttiva, setVistaAttiva] = useState('paziente')
   const [utentiLoggati, setUtentiLoggati] = useState({ paziente: null, medico: null, admin: null })
-  
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isLoggingIn, setIsLoggingIn] = useState(false) // 🌟 Feedback di caricamento per il login
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
 
-  const temaCorrente = UX_CONFIG[vistaAttiva];
+  const tema = UX_CONFIG[vistaAttiva];
 
   useEffect(() => {
     fetch(`${apiUrl}/`)
@@ -58,36 +59,24 @@ function App() {
   const eseguiLogin = async (e) => {
     e.preventDefault();
     setIsLoggingIn(true);
-    
     try {
       const res = await fetch(`${apiUrl}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-
-      if (!res.ok) throw new Error("Credenziali errate!");
-      
+      if (!res.ok) throw new Error("Credenziali non valide.");
       const dati = await res.json();
-      
-      if (!dati || !dati.ruolo) throw new Error("Risposta del server non valida");
-      
       if (dati.ruolo.toLowerCase() !== vistaAttiva) {
-        alert(`Accesso negato: queste sono credenziali da ${dati.ruolo}!`);
-        setIsLoggingIn(false);
+        alert(`Usa l'accesso dedicato ai ${dati.ruolo}!`);
         return;
       }
-
       setUtentiLoggati(prev => ({ ...prev, [vistaAttiva]: dati }));
-      setEmail(''); 
-      setPassword('');
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setIsLoggingIn(false);
-    }
+      setEmail(''); setPassword('');
+    } catch (err) { alert(err.message); } finally { setIsLoggingIn(false); }
   };
 
+  // 🌟 ECCO IL PEZZO CHE AVEVO PERSO! 🌟
   const eseguiLogout = () => {
     setUtentiLoggati(prev => ({ ...prev, [vistaAttiva]: null }));
   };
@@ -95,66 +84,73 @@ function App() {
   const renderizzaContenuto = () => {
     const utenteCorrente = utentiLoggati[vistaAttiva];
 
-    // FORM DI LOGIN PREMIUM
     if (!utenteCorrente && vistaAttiva !== 'admin') {
       return (
-        <div className="w-full max-w-md mx-auto mt-12 animate-in fade-in zoom-in-95 duration-500">
-          <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
-            
-            {/* Decorazione Sfondo Login */}
-            <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${temaCorrente.textGradient}`}></div>
-            
-            <div className="text-center mb-10">
-              <div className={`w-20 h-20 ${temaCorrente.bgAttivo}/10 text-${temaCorrente.colore}-600 rounded-[1.8rem] flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner`}>
-                {temaCorrente.icona}
-              </div>
-              <h3 className="text-3xl font-black text-slate-900 tracking-tight">{temaCorrente.titolo}</h3>
-              <p className="text-slate-400 font-medium mt-2 text-sm">{temaCorrente.sottotitolo}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mt-8 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+          
+          {/* LATO SINISTRO: BRANDING DINAMICO */}
+          <div className="hidden lg:block space-y-8">
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${tema.mesh} backdrop-blur-md border border-white/20`}>
+              <span className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${tema.bgAttivo}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${tema.bgAttivo}`}></span>
+              </span>
+              <span className={`text-[10px] font-black uppercase tracking-widest text-${tema.colore}-700`}>{tema.caratteristica}</span>
             </div>
+            
+            <h2 className={`text-7xl font-black tracking-tighter leading-[0.9] bg-gradient-to-br ${tema.textGradient} bg-clip-text text-transparent`}>
+              {tema.titolo}
+            </h2>
+            <p className="text-xl text-slate-500 font-medium max-w-md leading-relaxed">
+              {tema.desc} Accedi alla piattaforma sanitaria più avanzata del settore.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4 pt-4">
+              <div className="bg-white/50 backdrop-blur-sm p-6 rounded-[2rem] border border-white/50 shadow-sm hover:scale-105 transition-transform">
+                <p className="text-2xl mb-2">⚡</p>
+                <p className="text-xs font-black text-slate-800 uppercase">Velocità</p>
+                <p className="text-[10px] text-slate-400 font-bold mt-1 tracking-tighter">Zero attese, dati pronti.</p>
+              </div>
+              <div className="bg-white/50 backdrop-blur-sm p-6 rounded-[2rem] border border-white/50 shadow-sm hover:scale-105 transition-transform">
+                <p className="text-2xl mb-2">🛡️</p>
+                <p className="text-xs font-black text-slate-800 uppercase">Sicurezza</p>
+                <p className="text-[10px] text-slate-400 font-bold mt-1 tracking-tighter">Criptazione end-to-end.</p>
+              </div>
+            </div>
+          </div>
 
-            <form onSubmit={eseguiLogin} className="space-y-5">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Email</label>
+          {/* LATO DESTRO: FORM LOGIN */}
+          <div className="bg-white/80 backdrop-blur-2xl p-10 md:p-12 rounded-[3.5rem] shadow-2xl shadow-slate-200/50 border border-white relative">
+            <div className="lg:hidden text-center mb-10">
+               <h3 className={`text-4xl font-black bg-gradient-to-r ${tema.textGradient} bg-clip-text text-transparent`}>{tema.titolo}</h3>
+            </div>
+            
+            <form onSubmit={eseguiLogin} className="space-y-6">
+              <div className="group space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 transition-colors group-focus-within:text-slate-900">Email Aziendale</label>
                 <input 
-                  type="email" 
-                  placeholder="es. nome@medcloud.it" 
-                  required 
-                  className={`w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:ring-4 focus:ring-${temaCorrente.colore}-500/20 ${temaCorrente.ringFocus} font-medium transition-all shadow-inner`} 
-                  value={email} 
-                  onChange={e => setEmail(e.target.value)} 
+                  type="email" placeholder="nome@esempio.it" required 
+                  className={`w-full bg-white border border-slate-100 p-5 rounded-[1.8rem] focus:ring-4 focus:ring-${tema.colore}-500/10 focus:border-${tema.colore}-500 outline-none font-medium transition-all shadow-sm`}
+                  value={email} onChange={e => setEmail(e.target.value)} 
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Password di Sicurezza</label>
+              <div className="group space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 transition-colors group-focus-within:text-slate-900">Password</label>
                 <input 
-                  type="password" 
-                  placeholder="••••••••" 
-                  required 
-                  className={`w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl focus:ring-4 focus:ring-${temaCorrente.colore}-500/20 ${temaCorrente.ringFocus} font-medium transition-all shadow-inner`} 
-                  value={password} 
-                  onChange={e => setPassword(e.target.value)} 
+                  type="password" placeholder="••••••••" required 
+                  className={`w-full bg-white border border-slate-100 p-5 rounded-[1.8rem] focus:ring-4 focus:ring-${tema.colore}-500/10 focus:border-${tema.colore}-500 outline-none font-medium transition-all shadow-sm`}
+                  value={password} onChange={e => setPassword(e.target.value)} 
                 />
               </div>
               
-              <div className="pt-4">
-                <button 
-                  type="submit" 
-                  disabled={isLoggingIn}
-                  className={`w-full ${temaCorrente.bgAttivo} text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-${temaCorrente.colore}-900/20 hover:opacity-90 transition-all duration-300 active:scale-95 disabled:opacity-70 flex justify-center items-center gap-3`}
-                >
-                  {isLoggingIn ? (
-                    <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Autenticazione...</>
-                  ) : (
-                    <>Accedi al Sistema</>
-                  )}
-                </button>
-              </div>
+              <button 
+                type="submit" disabled={isLoggingIn}
+                className={`w-full ${tema.bgAttivo} text-white py-6 rounded-[2rem] font-black text-lg shadow-2xl shadow-${tema.colore}-900/20 hover:scale-[1.02] active:scale-95 transition-all duration-500 disabled:opacity-50 flex justify-center items-center gap-4`}
+              >
+                {isLoggingIn ? <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div> : "ENTRA NEL SISTEMA"}
+              </button>
             </form>
           </div>
-          
-          <p className="text-center text-slate-400 text-xs font-medium mt-6">
-            Accesso protetto e crittografato. © {new Date().getFullYear()} MedCloud.
-          </p>
         </div>
       );
     }
@@ -165,76 +161,65 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 flex flex-col font-sans selection:bg-slate-200 relative overflow-hidden">
+    <div className="min-h-screen bg-[#FDFDFF] flex flex-col font-sans selection:bg-slate-900 selection:text-white">
       
-      {/* SFONDO DECORATIVO GLOBALE (Ambient Light) */}
-      <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-400/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
-      <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-teal-400/10 blur-[120px] rounded-full pointer-events-none z-0"></div>
+      {/* MESH GRADIENT DYNAMICS */}
+      <div className={`fixed top-0 left-0 w-full h-full transition-colors duration-1000 -z-10 ${tema.mesh}`}></div>
+      <div className="fixed top-[-10%] right-[-10%] w-[40%] h-[40%] bg-white/50 blur-[150px] rounded-full -z-10"></div>
 
-      {/* NAVBAR GLASSMORPHISM PREMIUM */}
-      <nav className="sticky top-0 z-[100] bg-white/70 backdrop-blur-2xl border-b border-slate-200/50 px-6 py-4 shadow-sm">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+      {/* NAV ELITE */}
+      <nav className="sticky top-0 z-[100] bg-white/40 backdrop-blur-3xl border-b border-white/50 px-8 py-6">
+        <div className="max-w-[1400px] mx-auto flex justify-between items-center">
           
           <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.location.reload()}>
-            <div className="w-12 h-12 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg group-hover:rotate-6 transition-transform duration-300 border border-slate-700">M</div>
-            <div className="flex flex-col">
-              <h1 className="text-2xl font-black tracking-tighter leading-none bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent">MedCloud</h1>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Health System</span>
-            </div>
+            <div className="w-14 h-14 bg-slate-900 rounded-[1.5rem] flex items-center justify-center text-white font-black text-3xl shadow-2xl group-hover:rotate-12 transition-transform duration-500">M</div>
+            <h1 className="text-3xl font-black tracking-tighter leading-none text-slate-900">MedCloud</h1>
           </div>
 
-          <div className="flex items-center gap-6">
-            {/* Status Indicator */}
-            <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/80 rounded-full border border-slate-100 shadow-sm backdrop-blur-md">
-              <div className={`w-2 h-2 rounded-full ${statoBackend.includes('🚨') ? 'bg-red-500 animate-pulse' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`}></div>
-              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{statoBackend}</span>
+          <div className="flex items-center gap-8">
+            <div className="hidden md:flex items-center gap-3 px-6 py-2.5 bg-white/60 rounded-full border border-white shadow-sm">
+              <span className={`w-2 h-2 rounded-full ${statoBackend.includes('🚨') ? 'bg-red-500 animate-pulse' : 'bg-emerald-500 animate-pulse'}`}></span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{statoBackend}</span>
             </div>
 
-            {/* Profilo Utente Loggato */}
             {utentiLoggati[vistaAttiva] && (
-                <div className="flex items-center gap-4 pl-6 border-l border-slate-200">
-                    <div className="text-right hidden md:block">
-                        <p className="text-sm font-black text-slate-900 leading-none">{utentiLoggati[vistaAttiva].nome_completo}</p>
-                        <p className={`text-[10px] font-bold text-${temaCorrente.colore}-600 uppercase tracking-widest mt-1`}>{vistaAttiva}</p>
+                <div className="flex items-center gap-5 pl-8 border-l border-slate-200">
+                    <div className="text-right hidden sm:block leading-none">
+                        <p className="text-sm font-black text-slate-900">{utentiLoggati[vistaAttiva].nome_completo}</p>
+                        <p className={`text-[9px] font-black text-${tema.colore}-600 uppercase mt-1 tracking-widest`}>{vistaAttiva}</p>
                     </div>
-                    <button onClick={eseguiLogout} className="w-10 h-10 bg-slate-100 text-slate-500 rounded-[1rem] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors shadow-inner" title="Esci">
-                        <span className="text-xl">⏻</span>
-                    </button>
+                    <button onClick={eseguiLogout} className="w-12 h-12 bg-white text-red-500 rounded-2xl flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-900/5 font-bold">✕</button>
                 </div>
             )}
           </div>
         </div>
       </nav>
 
-      {/* MAIN LAYOUT */}
-      <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col lg:flex-row gap-10 flex-1 w-full relative z-10">
+      {/* LAYOUT PRINCIPALE */}
+      <div className="max-w-[1400px] mx-auto px-8 py-16 flex flex-col lg:flex-row gap-16 flex-1 w-full">
         
-        {/* SIDEBAR DI NAVIGAZIONE */}
-        <aside className="w-full lg:w-72 flex flex-col gap-3 shrink-0">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2 ml-4">Seleziona Ruolo</p>
+        {/* SIDEBAR BENTO STYLE */}
+        <aside className="w-full lg:w-80 space-y-4 shrink-0">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-6 ml-4">Terminal Access</p>
           
           {['paziente', 'medico', 'admin'].map(ruolo => {
-            const isAttivo = vistaAttiva === ruolo;
-            const config = UX_CONFIG[ruolo];
-            
+            const act = vistaAttiva === ruolo;
+            const c = UX_CONFIG[ruolo];
             return (
               <button 
                 key={ruolo}
                 onClick={() => { setVistaAttiva(ruolo); setEmail(''); setPassword(''); }}
-                className={`group flex items-center justify-between p-5 rounded-[1.5rem] font-black text-sm transition-all duration-300 border 
-                  ${isAttivo 
-                    ? `${config.bgAttivo} text-white shadow-xl shadow-${config.colore}-900/20 border-transparent scale-[1.02]` 
-                    : 'bg-white text-slate-500 hover:bg-slate-50 border-slate-100 hover:border-slate-200'}`}
+                className={`w-full group p-6 rounded-[2.5rem] transition-all duration-500 border-2 flex flex-col gap-4 text-left
+                  ${act ? `bg-white border-${c.colore}-500 shadow-2xl shadow-${c.colore}-900/10 scale-[1.05]` 
+                        : 'bg-white/40 border-transparent grayscale opacity-60 hover:grayscale-0 hover:opacity-100 hover:bg-white hover:border-white'}`}
               >
-                <span className="flex items-center gap-4">
-                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-colors duration-300 ${isAttivo ? 'bg-white/20' : 'bg-slate-100 group-hover:bg-slate-200'}`}>
-                    {config.icona}
-                  </span>
-                  {ruolo.toUpperCase()}
-                </span>
-                <span className={`transition-transform duration-300 ${isAttivo ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0 text-slate-300'}`}>
-                  ➔
-                </span>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-colors duration-500 ${act ? c.bgAttivo + ' text-white' : 'bg-slate-100'}`}>
+                  {c.icona}
+                </div>
+                <div>
+                  <p className={`text-xs font-black uppercase tracking-widest transition-colors ${act ? 'text-' + c.colore + '-600' : 'text-slate-400'}`}>{ruolo}</p>
+                  <p className="text-[10px] font-bold text-slate-400 mt-1 line-clamp-1">{c.desc}</p>
+                </div>
               </button>
             );
           })}
@@ -244,12 +229,9 @@ function App() {
         <main className="flex-1 min-w-0">
           {renderizzaContenuto()}
         </main>
-
       </div>
 
-      <div className="relative z-10">
-        <Footer />
-      </div>
+      <Footer />
     </div>
   )
 }

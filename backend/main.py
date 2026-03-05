@@ -5,10 +5,10 @@ import models, schemas
 from database import engine, SessionLocal, Base
 from fastapi.middleware.cors import CORSMiddleware
 
-# Crea le tabelle se non esistono
+# Crea le tabelle se non esistono (N.B. Riesegui popola_db.py se hai cambiato i modelli)
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="MedCloud")
+app = FastAPI(title="MedCloud - Digital Health System")
 
 # --- CONFIGURAZIONE CORS ---
 app.add_middleware(
@@ -29,7 +29,7 @@ def get_db():
 
 @app.get("/")
 async def root():
-    return {"messaggio": "MedCloud Online"}
+    return {"messaggio": "MedCloud Online - Backend Operativo"}
 
 # --- LOGIN ---
 @app.post("/api/login", response_model=schemas.LoginResponse, tags=["Autenticazione"])
@@ -38,6 +38,10 @@ def login_utente(credenziali: schemas.LoginRequest, db: Session = Depends(get_db
     
     if not utente or utente.password != credenziali.password:
         raise HTTPException(status_code=401, detail="Email o password errati")
+
+    # 🌟 LOGICA TESI: Registriamo l'ultimo accesso
+    utente.ultimo_accesso = datetime.utcnow()
+    db.commit()
 
     id_collegato = None
     nome_completo = "Amministratore"
@@ -68,11 +72,12 @@ def login_utente(credenziali: schemas.LoginRequest, db: Session = Depends(get_db
 
 @app.get("/api/prenotazioni", tags=["Prenotazioni"])
 def get_prenotazioni(db: Session = Depends(get_db)):
-    # JOIN fondamentale per mandare i nomi dei pazienti al medico
     risultati = db.query(
         models.Prenotazione, 
         models.Paziente.nome, 
         models.Paziente.cognome,
+        models.Paziente.gruppo_sanguigno, # <--- DEVE ESSERCI
+        models.Paziente.allergie,         # <--- DEVE ESSERCI
         models.Prestazione.nome_prestazione
     ).join(models.Paziente, models.Prenotazione.id_paziente == models.Paziente.id_paziente)\
      .join(models.Prestazione, models.Prenotazione.id_prestazione == models.Prestazione.id_prestazione).all()
@@ -85,8 +90,10 @@ def get_prenotazioni(db: Session = Depends(get_db)):
             "data_ora": p.data_ora,
             "stato": p.stato,
             "paziente_nome": f"{nome} {cognome}",
+            "paziente_gruppo_sangue": gruppo_sanguigno, # <--- DEVE ESSERCI
+            "paziente_allergie": allergie,               # <--- DEVE ESSERCI
             "tipo_visita": nome_prestazione
-        } for p, nome, cognome, nome_prestazione in risultati
+        } for p, nome, cognome, gruppo_sanguigno, allergie, nome_prestazione in risultati
     ]
 
 @app.get("/api/medici/{id_medico}/storico", tags=["Area Medica"])
@@ -125,7 +132,8 @@ def get_cartella_clinica(id_paziente: int, db: Session = Depends(get_db)):
             "medico": f"Dott. {medico.cognome}" if medico else "",
             "prestazione": prestazione.nome_prestazione if prestazione else "",
             "esito_visita": referto.esito_visita if referto else "In attesa di referto",
-            "prescrizioni": referto.prescrizioni if referto else ""
+            "prescrizioni": referto.prescrizioni if referto else "",
+            "allergie": p.paziente.allergie if p.paziente else ""
         })
     return storico
 
@@ -171,14 +179,12 @@ def crea_prenotazione(prenotazione_in: schemas.PrenotazioneCreate, db: Session =
     db.refresh(nuova_prenotazione)
     return nuova_prenotazione
 
-@app.post("/api/referti", tags=["Area Medica"]) # Tolto response_model per evitare blocchi
+@app.post("/api/referti", tags=["Area Medica"])
 def compila_referto(referto_in: schemas.RefertoCreate, db: Session = Depends(get_db)):
-    
     prenotazione = db.query(models.Prenotazione).filter(models.Prenotazione.id_prenotazione == referto_in.id_prenotazione).first()
     if not prenotazione:
         raise HTTPException(status_code=404, detail="Prenotazione non trovata.")
     
-    # 🌟 PROTEZIONE: Se arriva null, lo trasformiamo in stringa vuota
     prescrizioni_sicure = referto_in.prescrizioni if referto_in.prescrizioni else "Nessuna terapia prescritta."
 
     nuovo_referto = models.Referto(
@@ -190,7 +196,6 @@ def compila_referto(referto_in: schemas.RefertoCreate, db: Session = Depends(get
     
     prenotazione.stato = "COMPLETATA"
     
-    # 🌟 PROTEZIONE: Se la prestazione non si trova, mettiamo un costo standard
     prestazione = db.query(models.Prestazione).filter(models.Prestazione.id_prestazione == prenotazione.id_prestazione).first()
     costo_fattura = prestazione.costo if prestazione else 50 
     
@@ -212,7 +217,16 @@ def registra_paziente(paziente_in: schemas.PazienteCreate, db: Session = Depends
     db.commit()
     db.refresh(nuovo_utente)
     
-    nuovo_paziente = models.Paziente(id_utente=nuovo_utente.id_utente, nome=paziente_in.nome, cognome=paziente_in.cognome, codice_fiscale=paziente_in.codice_fiscale)
+    # 🌟 LOGICA TESI: Mappiamo i nuovi campi anamnesi durante la registrazione
+    nuovo_paziente = models.Paziente(
+        id_utente=nuovo_utente.id_utente, 
+        nome=paziente_in.nome, 
+        cognome=paziente_in.cognome, 
+        codice_fiscale=paziente_in.codice_fiscale,
+        gruppo_sanguigno=paziente_in.gruppo_sanguigno,
+        allergie=paziente_in.allergie,
+        patologie_pregresse=paziente_in.patologie_pregresse
+    )
     db.add(nuovo_paziente)
     db.commit()
     db.refresh(nuovo_paziente)
@@ -226,19 +240,14 @@ def get_medici(db: Session = Depends(get_db)):
 
 @app.get("/api/prestazioni", tags=["Prestazioni"])
 def get_prestazioni(db: Session = Depends(get_db)):
-    return db.query(models.Prestazione).all()
+    # 🌟 LOGICA TESI (Soft Delete): Mostriamo solo le prestazioni attive ai pazienti
+    return db.query(models.Prestazione).filter(models.Prestazione.is_active == True).all()
 
 @app.patch("/api/fatture/{id_fattura}/paga", tags=["Amministrazione"])
 def registra_pagamento(id_fattura: int, db: Session = Depends(get_db)):
     fattura = db.query(models.Fattura).filter(models.Fattura.id_fattura == id_fattura).first()
     if fattura:
         fattura.pagata = True
+        fattura.data_pagamento = datetime.utcnow() # 🌟 Tracciamo il momento del pagamento
         db.commit()
     return {"id_fattura": id_fattura}
-
-@app.post("/api/promemoria", tags=["Pazienti"])
-def imposta_promemoria(promemoria_in: schemas.PromemoriaCreate, db: Session = Depends(get_db)):
-    nuovo = models.Promemoria(id_prenotazione=promemoria_in.id_prenotazione)
-    db.add(nuovo)
-    db.commit()
-    return {"status": "ok"}
