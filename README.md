@@ -17,11 +17,9 @@
 3. [Funzionalità Principali](#-funzionalità-principali)
 4. [Infrastruttura e Database](#-infrastruttura-e-database)
 5. [Sicurezza e Integrità dei Dati](#-sicurezza-e-integrità-dei-dati)
-6. [Struttura del Design](#-struttura-del-design)
+6. [Progettazione e Modellazione](#-progettazione-e-modellazione)
 7. [Guida all'Installazione](#-guida-allinstallazione)
-8. [Progettazione e Modellazione](#-progettazione-e-modellazione)
-9. [Deployment & Risorse Cloud](#-deployment-&-risorse-cloud)
-
+8. [Deployment e Risorse Cloud](#-deployment-e-risorse-cloud)
 
 ---
 
@@ -97,25 +95,13 @@ Ecco una versione che mette in risalto la tua competenza in **UX/UI Design** e *
 
 ---
 
-### 🧑‍🎨 Struttura del Design
-
-Il progetto è stato sviluppato adottando i paradigmi del **Human-Centered Design (HCD)**, con l'obiettivo di dimostrare come un'interfaccia curata possa ridurre drasticamente il carico cognitivo dell'operatore sanitario e il rischio clinico per il paziente.
-
-**Punti chiave della progettazione:**
-
-  * **Architettura dell'Informazione e Gerarchia Visiva:** L'uso di card differenziate e di una palette cromatica semantica (es. rosso per le allergie, verde per lo stato saldato) permette una scansione rapida delle informazioni vitali, riducendo i tempi di reazione del medico e prevenendo sviste diagnostiche.
-  * **Design Inclusivo e Accessibilità:** Seguendo i principi del **Material Design**, l'interfaccia garantisce elevati contrasti e una leggibilità ottimale dei dati clinici, assicurando che la piattaforma sia fruibile in diverse condizioni di illuminazione e su molteplici dispositivi.
-  * **Affordance e Micro-interazioni:** Ogni elemento interattivo (come i toggle switch per l'attivazione dei servizi o i bottoni di firma del referto) è stato progettato per fornire un feedback immediato all'utente, eliminando l'incertezza e migliorando l'efficienza operativa del workflow ospedaliero.
-
----
-
 ## 📐 Progettazione e Modellazione
 
 Il design del sistema è stato preceduto da una fase di modellazione formale per garantire la coerenza dei dati e dei processi.
 
 | Diagramma | Tool | Link |
 | :--- | :--- | :--- |
-| **Schema E-R (Entity-Relationship)** | dbdiagram.io | [📊 Visualizza lo Schema DB]([https://dbdiagram.io/d/tuo-link-qui](https://dbdiagram.io/d/Project-Work-Schema-ER-69a6c5a2a3f0aa31e1a5c6b4)) |
+| **Schema E-R (Entity-Relationship)** | dbdiagram.io | [📊 Visualizza lo Schema DB](https://dbdiagram.io/d/Project-Work-Schema-ER-69a6c5a2a3f0aa31e1a5c6b4) |
 | **Diagrammi UML (Casi d'Uso/Sequenza)** | Mermaid.js | [🔄 Esplora i Diagrammi UML](https://mermaid.live/edit#tuo-link-qui) |
 
 ### Logica di Progettazione
@@ -153,7 +139,7 @@ npm run dev
 ```
 ---
 
-## 🌐 Deployment & Risorse Cloud
+## 🌐 Deployment e Risorse Cloud
 
 Per facilitare la revisione del progetto, sono stati predisposti i seguenti punti di accesso alle risorse live:
 
@@ -161,6 +147,6 @@ Per facilitare la revisione del progetto, sono stati predisposti i seguenti punt
 | :--- | :--- | :--- |
 | **Frontend Live** | Netlify | [🚀 Vai all'App](https://69a82fba9bbbf37cfc2aeb51--medcloud-pw.netlify.app) |
 | **Documentazione API** | Swagger UI | [📖 Esplora gli Endpoint](https://project-work-l-31.onrender.com/docs) |
-| **Database Console** | Neon.tech | [🐘 Gestione PostgreSQL]([https://console.neon.tech/](https://console.neon.tech/app/projects/dawn-poetry-37386529)) |
+| **Database Console** | Neon.tech | [🐘 Gestione PostgreSQL](https://console.neon.tech/app/projects/dawn-poetry-37386529) |
 
 ---
