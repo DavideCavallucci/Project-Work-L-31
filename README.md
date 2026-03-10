@@ -20,6 +20,7 @@
 6. [Progettazione e Modellazione](#-progettazione-e-modellazione)
 7. [Guida all'Installazione](#-guida-allinstallazione)
 8. [Deployment e Risorse Cloud](#-deployment-e-risorse-cloud)
+9. [Credenziali di Accesso per Test](#-credenziali-di-accesso-per-test)
 
 ---
 
@@ -152,3 +153,38 @@ Per facilitare la revisione del progetto, sono stati predisposti i seguenti punt
 | **Database Console** | Neon.tech | [🐘 Gestione PostgreSQL](https://console.neon.tech/app/projects/dawn-poetry-37386529) |
 
 ---
+
+## 🔐 Credenziali di Accesso per Test
+
+Per facilitare la fase di revisione dell'elaborato, il sistema è stato pre-popolato con account di test che riflettono i diversi livelli di autorizzazione previsti dalla logica di business.
+
+* **Nota:** La funzione di registrazione (Sign-up) non è prevista per l'utente finale in quanto, in un contesto aziendale sanitario, la creazione dei profili è di competenza esclusiva dell'Amministratore di sistema.
+
+### 1. Profilo Paziente (Area Prenotazioni)
+
+* **Paziente 1:** mario.rossi@medcloud.it
+* **Paziente 2:** laura.bianchi@medcloud.it
+* **Paziente 3:** giuseppe.verdi@medcloud.it
+* **Paziente 4:** anna.gialli@medcloud.it
+* **Paziente 5:** luigi.neri@medcloud.it
+* **Paziente 6:** chiara.marrone@medcloud.it
+* **Paziente 7:** paolo.blu@medcloud.it
+
+* **Password:** 1234 (valida per tutti i pazienti)
+
+Permessi: Prenotazione visite, visualizzazione storico clinico personale e download referti/fatture.
+
+### 2. Profilo Medico (Area Clinica)
+
+* **Medico 1:** cardiologia@medcloud.it
+* **Medico 2:** dermatologia@medcloud.it
+* **Medico 3:** ortopedia@medcloud.it
+* **Medico 4:** oculistica@medcloud.it
+* **Medico 5:** pediatria@medcloud.it
+* **Medico 6:** neurologia@medcloud.it
+* **Medico 7:** psicologia@medcloud.it
+
+* **Password:** 1234 (valida per tutti i medici)
+
+Permessi: Gestione agenda, accesso alle cartelle cliniche dei pazienti, invio referti e generazione automatica fatture.
+
