@@ -171,7 +171,11 @@ function App() {
         <div className="max-w-[1400px] mx-auto flex justify-between items-center">
           
           <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.location.reload()}>
-            <div className="w-14 h-14 bg-slate-900 rounded-[1.5rem] flex items-center justify-center text-white font-black text-3xl shadow-2xl group-hover:rotate-12 transition-transform duration-500">M</div>
+            <img 
+              src="/logo-medcloud.png" 
+              alt="MedCloud Logo" 
+              className="w-14 h-14 object-contain group-hover:scale-105 transition-transform duration-500" 
+            />
             <h1 className="text-3xl font-black tracking-tighter leading-none text-slate-900">MedCloud</h1>
           </div>
 

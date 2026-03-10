@@ -14,9 +14,13 @@ export default function Footer() {
           {/* BRAND COLUMN */}
           <div className="md:col-span-4 space-y-6">
             <div className="flex items-center gap-3 group cursor-default">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-900/20">
-                M
-              </div>
+              {/* INSERIMENTO LOGO QUI */}
+              {/* Assicurati di mettere l'immagine in public/ e rinominarla logo-medcloud.png */}
+              <img 
+                src="/logo-medcloud.png" 
+                alt="MedCloud Icon" 
+                className="w-10 h-10 object-contain"
+              />
               <span className="text-white font-black text-2xl tracking-tighter">MedCloud</span>
             </div>
             
@@ -77,10 +81,21 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* BOTTOM COPYRIGHT */}
-        <div className="mt-20 pt-8 border-t border-slate-900 flex justify-center items-center text-center">
+        {/* BOTTOM COPYRIGHT & PERSONAL LINK */}
+        <div className="mt-20 pt-8 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center text-center gap-4">
           <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
             © {currentYear} MedCloud Health Systems. Built for Excellence.
+          </div>
+          <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
+            Sviluppato da{' '}
+            <a 
+              href="https://davidecavallucci.github.io/Personal-Website/index.html" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-blue-500 hover:text-blue-400 transition-colors"
+            >
+              Davide Cavallucci
+            </a>
           </div>
         </div>
       </div>
