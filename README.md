@@ -162,13 +162,13 @@ Per facilitare la fase di revisione dell'elaborato, il sistema è stato pre-popo
 
 ### 1. Profilo Paziente (Area Prenotazioni)
 
-* **Paziente 1:** mario.rossi@medcloud.it
-* **Paziente 2:** laura.bianchi@medcloud.it
-* **Paziente 3:** giuseppe.verdi@medcloud.it
-* **Paziente 4:** anna.gialli@medcloud.it
-* **Paziente 5:** luigi.neri@medcloud.it
-* **Paziente 6:** chiara.marrone@medcloud.it
-* **Paziente 7:** paolo.blu@medcloud.it
+* **Paziente 1:** mario.rossi@email.it
+* **Paziente 2:** laura.bianchi@email.it
+* **Paziente 3:** giuseppe.verdi@email.it
+* **Paziente 4:** anna.gialli@email.it
+* **Paziente 5:** luigi.neri@email.it
+* **Paziente 6:** chiara.marrone@email.it
+* **Paziente 7:** paolo.blu@email.it
 
 * **Password:** 1234 (valida per tutti i pazienti)
 
