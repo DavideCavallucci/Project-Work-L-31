@@ -90,12 +90,6 @@ Il modello ER è stato progettato per garantire la **normalizzazione dei dati** 
 
 ---
 
-Certamente! Eleviamo il tono di questa sezione parlando di come il design non sia solo "estetica", ma uno strumento fondamentale per prevenire l'errore umano in contesti critici come quello sanitario.
-
-Ecco una versione che mette in risalto la tua competenza in **UX/UI Design** e **Human-Centered Design**:
-
----
-
 ## 📐 Progettazione e Modellazione
 
 Il design del sistema è stato preceduto da una fase di modellazione formale per garantire la coerenza dei dati e dei processi.
@@ -148,7 +142,7 @@ Per facilitare la revisione del progetto, sono stati predisposti i seguenti punt
 
 | Risorsa | Piattaforma | Link Diretto |
 | :--- | :--- | :--- |
-| **Frontend Live** | Netlify | [🚀 Vai all'App](https://69a82fba9bbbf37cfc2aeb51--medcloud-pw.netlify.app) |
+| **Frontend Live** | Netlify | [🚀 Vai all'App](https://medcloud-pw.netlify.app) |
 | **Documentazione API** | Swagger UI | [📖 Esplora gli Endpoint](https://project-work-l-31.onrender.com/docs) |
 | **Database Console** | Neon.tech | [🐘 Gestione PostgreSQL](https://console.neon.tech/app/projects/dawn-poetry-37386529) |
 
